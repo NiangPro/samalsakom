@@ -1,6 +1,46 @@
 <?php
 $page_title = "Services";
 include 'includes/header.php';
+
+// Récupération des formules depuis la base de données
+require_once 'config/database.php';
+$database = new Database();
+$db = $database->getConnection();
+
+try {
+    // Récupérer les formules actives avec leurs fonctionnalités
+    $formules_query = "SELECT * FROM formules_services 
+                       WHERE statut = 'actif' 
+                       ORDER BY ordre_affichage ASC, id ASC";
+    $stmt = $db->prepare($formules_query);
+    $stmt->execute();
+    $formules = $stmt->fetchAll();
+    
+    // Récupérer toutes les fonctionnalités
+    $fonctionnalites_query = "SELECT ff.*, fs.nom as formule_nom 
+                              FROM formule_fonctionnalites ff
+                              JOIN formules_services fs ON ff.formule_id = fs.id
+                              WHERE fs.statut = 'actif'
+                              ORDER BY ff.formule_id, ff.ordre_affichage ASC";
+    $stmt = $db->prepare($fonctionnalites_query);
+    $stmt->execute();
+    $all_fonctionnalites = $stmt->fetchAll();
+    
+    // Organiser les fonctionnalités par formule
+    $fonctionnalites_by_formule = [];
+    foreach ($all_fonctionnalites as $fonc) {
+        $fonctionnalites_by_formule[$fonc['formule_id']][] = $fonc;
+    }
+    
+} catch (PDOException $e) {
+    // En cas d'erreur, utiliser les données par défaut
+    $formules = [
+        ['id' => 1, 'nom' => 'Basique', 'prix' => 0, 'description' => 'Pour débuter', 'couleur' => 'outline-primary', 'populaire' => 0],
+        ['id' => 2, 'nom' => 'Premium', 'prix' => 2500, 'description' => 'Par mois', 'couleur' => 'primary', 'populaire' => 1],
+        ['id' => 3, 'nom' => 'Business', 'prix' => 5000, 'description' => 'Par mois', 'couleur' => 'secondary', 'populaire' => 0]
+    ];
+    $fonctionnalites_by_formule = [];
+}
 ?>
 
 <!-- Hero Section Services -->
@@ -126,68 +166,54 @@ include 'includes/header.php';
         </div>
 
         <div class="row g-4 justify-content-center">
-            <!-- Formule Basique -->
-            <div class="col-lg-4" data-aos="fade-up" data-aos-delay="100">
-                <div class="pricing-card card-modern p-4 text-center h-100">
-                    <div class="pricing-header mb-4">
-                        <h4 class="fw-bold">Basique</h4>
-                        <div class="price display-4 fw-bold text-gradient mb-2">Gratuit</div>
-                        <p class="text-muted">Pour débuter</p>
-                    </div>
-                    <ul class="list-unstyled mb-4">
-                        <li class="mb-3"><i class="fas fa-check text-success me-2"></i>Jusqu'à 2 tontines</li>
-                        <li class="mb-3"><i class="fas fa-check text-success me-2"></i>10 participants max par tontine</li>
-                        <li class="mb-3"><i class="fas fa-check text-success me-2"></i>Notifications SMS</li>
-                        <li class="mb-3"><i class="fas fa-check text-success me-2"></i>Support par email</li>
-                        <li class="mb-3"><i class="fas fa-times text-muted me-2"></i>Épargne automatique</li>
-                        <li class="mb-3"><i class="fas fa-times text-muted me-2"></i>Microcrédits</li>
-                    </ul>
-                    <a href="register.php" class="btn btn-outline-custom w-100">Commencer</a>
-                </div>
-            </div>
-
-            <!-- Formule Premium -->
-            <div class="col-lg-4" data-aos="fade-up" data-aos-delay="200">
-                <div class="pricing-card card-modern p-4 text-center h-100 position-relative">
+            <?php 
+            $delay = 100;
+            foreach ($formules as $formule): 
+                $fonctionnalites = isset($fonctionnalites_by_formule[$formule['id']]) ? $fonctionnalites_by_formule[$formule['id']] : [];
+            ?>
+            <div class="col-lg-4" data-aos="fade-up" data-aos-delay="<?php echo $delay; ?>">
+                <div class="pricing-card card-modern p-4 text-center h-100 <?php echo $formule['populaire'] ? 'position-relative' : ''; ?>">
+                    <?php if ($formule['populaire']): ?>
                     <div class="popular-badge position-absolute top-0 start-50 translate-middle">
                         <span class="badge bg-gradient-primary px-3 py-2">Populaire</span>
                     </div>
-                    <div class="pricing-header mb-4 mt-3">
-                        <h4 class="fw-bold">Premium</h4>
-                        <div class="price display-4 fw-bold text-gradient mb-2">2 500 FCFA</div>
-                        <p class="text-muted">Par mois</p>
+                    <?php endif; ?>
+                    
+                    <div class="pricing-header mb-4 <?php echo $formule['populaire'] ? 'mt-3' : ''; ?>">
+                        <h4 class="fw-bold"><?php echo htmlspecialchars($formule['nom']); ?></h4>
+                        <div class="price display-4 fw-bold text-gradient mb-2">
+                            <?php if ($formule['prix'] == 0): ?>
+                                Gratuit
+                            <?php else: ?>
+                                <?php echo number_format($formule['prix'], 0, ',', ' '); ?> <?php echo $formule['devise']; ?>
+                            <?php endif; ?>
+                        </div>
+                        <p class="text-muted"><?php echo htmlspecialchars($formule['description']); ?></p>
                     </div>
+                    
                     <ul class="list-unstyled mb-4">
-                        <li class="mb-3"><i class="fas fa-check text-success me-2"></i>Tontines illimitées</li>
-                        <li class="mb-3"><i class="fas fa-check text-success me-2"></i>50 participants max par tontine</li>
-                        <li class="mb-3"><i class="fas fa-check text-success me-2"></i>Épargne automatique</li>
-                        <li class="mb-3"><i class="fas fa-check text-success me-2"></i>Tableaux de bord avancés</li>
-                        <li class="mb-3"><i class="fas fa-check text-success me-2"></i>Formation financière</li>
-                        <li class="mb-3"><i class="fas fa-check text-success me-2"></i>Support prioritaire</li>
+                        <?php foreach ($fonctionnalites as $fonc): ?>
+                        <li class="mb-3">
+                            <i class="<?php echo $fonc['inclus'] ? 'fas fa-check text-success' : 'fas fa-times text-muted'; ?> me-2"></i>
+                            <?php echo htmlspecialchars($fonc['nom']); ?>
+                        </li>
+                        <?php endforeach; ?>
                     </ul>
-                    <a href="register.php" class="btn btn-primary-custom w-100">Choisir Premium</a>
+                    
+                    <?php
+                    $btn_class = 'btn-' . $formule['couleur'];
+                    $btn_text = $formule['prix'] == 0 ? 'Commencer' : 'Choisir ' . $formule['nom'];
+                    $btn_link = $formule['prix'] == 0 ? 'register.php' : 'contact.php';
+                    ?>
+                    <a href="<?php echo $btn_link; ?>" class="btn <?php echo $btn_class; ?> w-100">
+                        <?php echo $btn_text; ?>
+                    </a>
                 </div>
             </div>
-
-            <!-- Formule Business -->
-            <div class="col-lg-4" data-aos="fade-up" data-aos-delay="300">
-                <div class="pricing-card card-modern p-4 text-center h-100">
-                    <div class="pricing-header mb-4">
-                        <h4 class="fw-bold">Business</h4>
-                        <div class="price display-4 fw-bold text-gradient mb-2">5 000 FCFA</div>
-                        <p class="text-muted">Par mois</p>
-                    </div>
-                    <ul class="list-unstyled mb-4">
-                        <li class="mb-3"><i class="fas fa-check text-success me-2"></i>Toutes les fonctionnalités Premium</li>
-                        <li class="mb-3"><i class="fas fa-check text-success me-2"></i>Participants illimités</li>
-                        <li class="mb-3"><i class="fas fa-check text-success me-2"></i>Microcrédits jusqu'à 500 000 FCFA</li>
-                        <li class="mb-3"><i class="fas fa-check text-success me-2"></i>API pour intégrations</li>
-                        <li class="mb-3"><i class="fas fa-check text-success me-2"></i>Gestionnaire de compte dédié</li>
-                        <li class="mb-3"><i class="fas fa-check text-success me-2"></i>Rapports personnalisés</li>
-                    </ul>
-                    <a href="contact.php" class="btn btn-secondary-custom w-100">Nous Contacter</a>
-                </div>
-            </div>
+            <?php 
+            $delay += 100;
+            endforeach; 
+            ?>
         </div>
     </div>
 </section>

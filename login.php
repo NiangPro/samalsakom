@@ -38,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['user_prenom'] = $user['prenom'];
                 $_SESSION['user_email'] = $user['email'];
                 
-                // Redirection vers le tableau de bord
+                // Redirection vers le tableau de bord utilisateur
                 header('Location: dashboard/index.php');
                 exit;
             } else {

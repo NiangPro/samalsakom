@@ -62,7 +62,7 @@
         <div class="row align-items-center">
             <div class="col-md-6">
                 <p class="text-light opacity-75 mb-0">
-                    &copy; 2024 SamalSakom. Tous droits réservés.
+                    &copy; 2024 SamalSakom. Tous droits réservés. <a href="admin-login.php">Admin</a>
                 </p>
             </div>
             <div class="col-md-6 text-md-end">

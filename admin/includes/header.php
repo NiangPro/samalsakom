@@ -124,6 +124,17 @@ $admin = $stmt->fetch();
                 </div>
             </div>
             
+            <!-- Section Contenu -->
+            <div class="nav-section">
+                <div class="nav-section-title">Contenu</div>
+                <div class="nav-item">
+                    <a href="formules.php" class="nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'formules.php' ? 'active' : ''; ?>">
+                        <i class="nav-icon fas fa-tags"></i>
+                        <span class="nav-text">Formules Services</span>
+                    </a>
+                </div>
+            </div>
+            
             <!-- Section Système -->
             <div class="nav-section">
                 <div class="nav-section-title">Système</div>

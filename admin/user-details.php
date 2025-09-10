@@ -228,7 +228,7 @@ try {
                                     </div>
                                 </td>
                                 <td>
-                                    <span class="fw-semibold"><?php echo number_format($tontine['montant_par_personne']); ?> FCFA</span>
+                                    <span class="fw-semibold"><?php echo number_format($tontine['montant_cotisation']); ?> FCFA</span>
                                 </td>
                                 <td><?php echo date('d/m/Y', strtotime($tontine['date_participation'])); ?></td>
                                 <td>

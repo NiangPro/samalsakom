@@ -382,14 +382,14 @@ include 'includes/header.php';
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label">Utilisateur *</label>
-                            <select class="form-select" name="user_id" required>
+                            <select class="form-select" name="user_id" required id="userSelect">
                                 <option value="">Sélectionner un utilisateur</option>
                                 <!-- Options chargées dynamiquement -->
                             </select>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Tontine *</label>
-                            <select class="form-select" name="tontine_id" required>
+                            <select class="form-select" name="tontine_id" required id="tontineSelect">
                                 <option value="">Sélectionner une tontine</option>
                                 <!-- Options chargées dynamiquement -->
                             </select>
@@ -422,35 +422,122 @@ include 'includes/header.php';
 </div>
 
 <script>
+// Charger les utilisateurs et tontines au chargement de la page
+document.addEventListener('DOMContentLoaded', function() {
+    loadUsersAndTontines();
+});
+
+function loadUsersAndTontines(userId = null) {
+    const url = userId ? `actions/get_users_tontines.php?user_id=${userId}` : 'actions/get_users_tontines.php';
+    
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const userSelect = document.getElementById('userSelect');
+                const tontineSelect = document.getElementById('tontineSelect');
+                
+                // Charger les utilisateurs (seulement si pas de userId spécifique)
+                if (!userId) {
+                    userSelect.innerHTML = '<option value="">Sélectionner un utilisateur</option>';
+                    data.data.users.forEach(user => {
+                        userSelect.innerHTML += `<option value="${user.id}">${user.nom} (${user.email})</option>`;
+                    });
+                    
+                    // Ajouter l'événement de changement pour l'utilisateur
+                    userSelect.addEventListener('change', function() {
+                        const selectedUserId = this.value;
+                        if (selectedUserId) {
+                            loadUsersAndTontines(selectedUserId);
+                        } else {
+                            loadUsersAndTontines();
+                        }
+                    });
+                }
+                
+                // Charger les tontines (filtrées par utilisateur si spécifié)
+                tontineSelect.innerHTML = '<option value="">Sélectionner une tontine</option>';
+                data.data.tontines.forEach(tontine => {
+                    tontineSelect.innerHTML += `<option value="${tontine.id}">${tontine.nom} - ${tontine.montant_cotisation} FCFA</option>`;
+                });
+                
+                // Afficher un message si aucune tontine pour cet utilisateur
+                if (userId && data.data.tontines.length === 0) {
+                    tontineSelect.innerHTML = '<option value="">Aucune tontine pour cet utilisateur</option>';
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            showToast('Erreur lors du chargement des données', 'error');
+        });
+}
+
 function viewTransaction(id) {
-    // Afficher les détails de la transaction
     showToast('Chargement des détails...', 'info');
+    // TODO: Implémenter la vue détaillée
 }
 
 function validateTransaction(id) {
     if (confirm('Êtes-vous sûr de vouloir valider cette transaction ?')) {
-        // AJAX pour valider la transaction
-        showToast('Transaction validée avec succès', 'success');
-        setTimeout(() => location.reload(), 1000);
+        const formData = new FormData();
+        formData.append('transaction_id', id);
+        
+        fetch('actions/validate_transaction.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast(data.message, 'success');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showToast(data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            showToast('Erreur lors de la validation', 'error');
+        });
     }
 }
 
 function rejectTransaction(id) {
-    if (confirm('Êtes-vous sûr de vouloir rejeter cette transaction ?')) {
-        // AJAX pour rejeter la transaction
-        showToast('Transaction rejetée', 'warning');
-        setTimeout(() => location.reload(), 1000);
+    const raison = prompt('Raison du rejet (optionnel):');
+    if (raison !== null) {
+        const formData = new FormData();
+        formData.append('transaction_id', id);
+        formData.append('raison', raison);
+        
+        fetch('actions/reject_transaction.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast(data.message, 'success');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showToast(data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            showToast('Erreur lors du rejet', 'error');
+        });
     }
 }
 
 function downloadReceipt(id) {
     showToast('Génération du reçu...', 'info');
-    // Logique de téléchargement
+    // TODO: Implémenter la génération de reçu
 }
 
 function exportTransactions() {
     showToast('Export en cours...', 'info');
-    // Logique d'export
+    // TODO: Implémenter l'export
 }
 
 function saveTransaction() {
@@ -463,10 +550,79 @@ function saveTransaction() {
         return;
     }
     
-    // AJAX pour sauvegarder
-    showToast('Transaction enregistrée avec succès', 'success');
-    bootstrap.Modal.getInstance(document.getElementById('addTransactionModal')).hide();
-    setTimeout(() => location.reload(), 1000);
+    // Désactiver le bouton pour éviter les doubles soumissions
+    const submitBtn = document.querySelector('#addTransactionModal .btn-primary');
+    const originalText = submitBtn.textContent;
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Enregistrement...';
+    
+    fetch('actions/add_transaction.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast(data.message, 'success');
+            bootstrap.Modal.getInstance(document.getElementById('addTransactionModal')).hide();
+            form.reset();
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showToast(data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+        showToast('Erreur lors de l\'enregistrement', 'error');
+    })
+    .finally(() => {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+    });
+}
+
+// Fonction pour afficher les toasts
+function showToast(message, type = 'info') {
+    // Créer le toast s'il n'existe pas
+    let toastContainer = document.getElementById('toastContainer');
+    if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.id = 'toastContainer';
+        toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+        toastContainer.style.zIndex = '9999';
+        document.body.appendChild(toastContainer);
+    }
+    
+    const toastId = 'toast_' + Date.now();
+    const bgClass = {
+        'success': 'bg-success',
+        'error': 'bg-danger',
+        'warning': 'bg-warning',
+        'info': 'bg-info'
+    }[type] || 'bg-info';
+    
+    const toastHtml = `
+        <div id="${toastId}" class="toast ${bgClass} text-white" role="alert">
+            <div class="toast-header ${bgClass} text-white border-0">
+                <strong class="me-auto">Notification</strong>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body">
+                ${message}
+            </div>
+        </div>
+    `;
+    
+    toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+    
+    const toastElement = document.getElementById(toastId);
+    const toast = new bootstrap.Toast(toastElement, { delay: 5000 });
+    toast.show();
+    
+    // Supprimer le toast après fermeture
+    toastElement.addEventListener('hidden.bs.toast', function() {
+        toastElement.remove();
+    });
 }
 </script>
 
