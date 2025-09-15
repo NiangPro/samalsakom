@@ -28,12 +28,3 @@ ALTER TABLE participations ADD COLUMN IF NOT EXISTS date_retrait TIMESTAMP NULL 
 
 -- Modifier la table cotisations pour ajouter de nouveaux statuts et colonnes
 ALTER TABLE cotisations MODIFY COLUMN statut ENUM('pending', 'completed', 'failed', 'cancelled') DEFAULT 'pending';
-
--- Ajouter la colonne description à la table cotisations
-ALTER TABLE cotisations ADD COLUMN description TEXT NULL AFTER reference_paiement;
-
--- Ajouter la colonne raison_rejet à la table cotisations
-ALTER TABLE cotisations ADD COLUMN raison_rejet TEXT NULL AFTER description;
-
--- Ajouter la colonne date_validation à la table cotisations
-ALTER TABLE cotisations ADD COLUMN date_validation TIMESTAMP NULL AFTER raison_rejet;

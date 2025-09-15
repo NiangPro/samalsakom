@@ -115,9 +115,27 @@ try {
     $stmt->execute([$user_id, $user_id, $user_id, $user_id]);
     $user_stats = $stmt->fetch();
     
+    // Vérifier si les statistiques ont été récupérées correctement
+    if (!$user_stats) {
+        $user_stats = [
+            'tontines_actives' => 0,
+            'total_cotise' => 0,
+            'cotisations_pending' => 0,
+            'paiements_effectues' => 0
+        ];
+    }
+    
 } catch (Exception $e) {
     error_log("Erreur profil: " . $e->getMessage());
     $errors[] = "Erreur de chargement des données";
+    
+    // Initialiser les variables par défaut en cas d'erreur
+    $user_stats = [
+        'tontines_actives' => 0,
+        'total_cotise' => 0,
+        'cotisations_pending' => 0,
+        'paiements_effectues' => 0
+    ];
 }
 
 include 'includes/header.php';
@@ -327,7 +345,7 @@ include 'includes/header.php';
                                 <i class="fas fa-piggy-bank"></i>
                             </div>
                             <div class="stat-content">
-                                <div class="stat-number"><?= $user_stats['tontines_actives'] ?></div>
+                                <div class="stat-number"><?= $user_stats['tontines_actives'] ?? 0 ?></div>
                                 <div class="stat-label">Tontines Actives</div>
                             </div>
                         </div>
@@ -337,7 +355,7 @@ include 'includes/header.php';
                                 <i class="fas fa-coins"></i>
                             </div>
                             <div class="stat-content">
-                                <div class="stat-number"><?= number_format($user_stats['total_cotise'], 0, ',', ' ') ?></div>
+                                <div class="stat-number"><?= number_format($user_stats['total_cotise'] ?? 0, 0, ',', ' ') ?></div>
                                 <div class="stat-label">FCFA Cotisés</div>
                             </div>
                         </div>
@@ -347,7 +365,7 @@ include 'includes/header.php';
                                 <i class="fas fa-clock"></i>
                             </div>
                             <div class="stat-content">
-                                <div class="stat-number"><?= $user_stats['cotisations_pending'] ?></div>
+                                <div class="stat-number"><?= $user_stats['cotisations_pending'] ?? 0 ?></div>
                                 <div class="stat-label">Paiements En Attente</div>
                             </div>
                         </div>
@@ -357,7 +375,7 @@ include 'includes/header.php';
                                 <i class="fas fa-check-circle"></i>
                             </div>
                             <div class="stat-content">
-                                <div class="stat-number"><?= $user_stats['paiements_effectues'] ?></div>
+                                <div class="stat-number"><?= $user_stats['paiements_effectues'] ?? 0 ?></div>
                                 <div class="stat-label">Paiements Effectués</div>
                             </div>
                         </div>
@@ -459,24 +477,34 @@ include 'includes/header.php';
 })();
 
 // Validation des mots de passe
-document.getElementById('confirm_password').addEventListener('input', function() {
-    const newPassword = document.getElementById('new_password').value;
-    const confirmPassword = this.value;
-    
-    if (newPassword !== confirmPassword) {
-        this.setCustomValidity('Les mots de passe ne correspondent pas');
-    } else {
-        this.setCustomValidity('');
+document.addEventListener('DOMContentLoaded', function() {
+    const confirmPasswordField = document.getElementById('confirm_password');
+    if (confirmPasswordField) {
+        confirmPasswordField.addEventListener('input', function() {
+            const newPassword = document.getElementById('new_password').value;
+            const confirmPassword = this.value;
+            
+            if (newPassword !== confirmPassword) {
+                this.setCustomValidity('Les mots de passe ne correspondent pas');
+            } else {
+                this.setCustomValidity('');
+            }
+        });
     }
 });
 
 // Formatage du numéro de téléphone
-document.getElementById('telephone').addEventListener('input', function() {
-    let value = this.value.replace(/\D/g, '');
-    if (value.length >= 2) {
-        value = value.substring(0, 2) + ' ' + value.substring(2, 5) + ' ' + value.substring(5, 7) + ' ' + value.substring(7, 9);
+document.addEventListener('DOMContentLoaded', function() {
+    const telephoneField = document.getElementById('telephone');
+    if (telephoneField) {
+        telephoneField.addEventListener('input', function() {
+            let value = this.value.replace(/\D/g, '');
+            if (value.length >= 2) {
+                value = value.substring(0, 2) + ' ' + value.substring(2, 5) + ' ' + value.substring(5, 7) + ' ' + value.substring(7, 9);
+            }
+            this.value = value.trim();
+        });
     }
-    this.value = value.trim();
 });
 </script>
 

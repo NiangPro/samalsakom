@@ -193,8 +193,11 @@ include 'includes/header.php';
                         <select name="type" class="form-select">
                             <option value="">Tous les types</option>
                             <option value="cotisation" <?= $type_filter === 'cotisation' ? 'selected' : '' ?>>Cotisations</option>
+                            <option value="recharge" <?= $type_filter === 'recharge' ? 'selected' : '' ?>>Recharges</option>
                             <option value="retrait" <?= $type_filter === 'retrait' ? 'selected' : '' ?>>Retraits</option>
                             <option value="bonus" <?= $type_filter === 'bonus' ? 'selected' : '' ?>>Bonus</option>
+                            <option value="remboursement" <?= $type_filter === 'remboursement' ? 'selected' : '' ?>>Remboursements</option>
+                            <option value="penalite" <?= $type_filter === 'penalite' ? 'selected' : '' ?>>Pénalités</option>
                         </select>
                     </div>
                     <div class="col-md-3">
@@ -283,10 +286,10 @@ include 'includes/header.php';
                                             </span>
                                         </td>
                                         <td>
-                                            <?php if ($transaction['mode_paiement']): ?>
+                                            <?php if (!empty($transaction['methode_paiement'])): ?>
                                                 <div class="d-flex align-items-center">
-                                                    <i class="fas <?= getPaymentIcon($transaction['mode_paiement']) ?> me-2"></i>
-                                                    <?= ucfirst(str_replace('_', ' ', $transaction['mode_paiement'])) ?>
+                                                    <i class="fas <?= getPaymentIcon($transaction['methode_paiement']) ?> me-2"></i>
+                                                    <?= ucfirst(str_replace('_', ' ', $transaction['methode_paiement'])) ?>
                                                 </div>
                                             <?php else: ?>
                                                 <span class="text-muted">-</span>
@@ -313,10 +316,14 @@ include 'includes/header.php';
                                             </span>
                                         </td>
                                         <td>
-                                            <?php if ($transaction['reference_paiement']): ?>
+                                            <?php if (!empty($transaction['reference_paiement'])): ?>
                                                 <code class="small"><?= htmlspecialchars($transaction['reference_paiement']) ?></code>
                                             <?php else: ?>
-                                                <span class="text-muted">-</span>
+                                                <?php 
+                                                // Générer une référence basée sur l'ID et la date
+                                                $ref = 'TXN' . str_pad($transaction['id'], 6, '0', STR_PAD_LEFT) . date('ymd', strtotime($transaction['date_creation']));
+                                                ?>
+                                                <code class="small text-muted"><?= $ref ?></code>
                                             <?php endif; ?>
                                         </td>
                                         <td>
