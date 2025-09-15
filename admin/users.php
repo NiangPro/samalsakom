@@ -15,11 +15,34 @@ try {
     $count_stmt->execute();
     $total_users = $count_stmt->fetch()['total'];
     $total_pages = ceil($total_users / $limit);
+<<<<<<< HEAD
     
     // Récupérer les utilisateurs
     $query = "SELECT * FROM users ORDER BY date_creation DESC LIMIT ? OFFSET ?";
     $stmt = $db->prepare($query);
     $stmt->execute([$limit, $offset]);
+=======
+
+    // Compter le total d'utilisateurs actifs/inactifs (pour cohérence des métriques)
+    // Compte 'actif' avec normalisation (trim/lower) pour éviter les écarts de casse/espaces
+    $active_query = "SELECT COUNT(*) as count FROM users WHERE TRIM(LOWER(COALESCE(statut, ''))) = 'actif'";
+    $active_stmt = $db->prepare($active_query);
+    $active_stmt->execute();
+    $total_active_users = (int)$active_stmt->fetch()['count'];
+
+    // Inactifs = tout ce qui n'est pas strictement 'actif' (inclut NULL)
+    $inactive_query = "SELECT COUNT(*) as count FROM users WHERE statut IS NULL OR TRIM(LOWER(statut)) <> 'actif'";
+    $inactive_stmt = $db->prepare($inactive_query);
+    $inactive_stmt->execute();
+    $total_inactive_users = (int)$inactive_stmt->fetch()['count'];
+
+    // Récupérer les utilisateurs (bind des entiers pour éviter les incohérences LIMIT/OFFSET)
+    $query = "SELECT * FROM users ORDER BY date_creation DESC LIMIT :limit OFFSET :offset";
+    $stmt = $db->prepare($query);
+    $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
+    $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
+    $stmt->execute();
+>>>>>>> de209a5df705cdb1aa0c9ffa8b75087f1ac9e0cb
     $users = $stmt->fetchAll();
     
 } catch (PDOException $e) {
@@ -50,6 +73,7 @@ try {
                 <i class="fas fa-user-check"></i>
             </div>
         </div>
+<<<<<<< HEAD
         <div class="stat-value">
             <?php
             $active_query = "SELECT COUNT(*) as count FROM users WHERE statut = 'actif'";
@@ -58,6 +82,9 @@ try {
             echo number_format($active_stmt->fetch()['count']);
             ?>
         </div>
+=======
+        <div class="stat-value"><?php echo number_format($total_active_users); ?></div>
+>>>>>>> de209a5df705cdb1aa0c9ffa8b75087f1ac9e0cb
         <div class="stat-label">Utilisateurs Actifs</div>
     </div>
     
@@ -84,6 +111,7 @@ try {
                 <i class="fas fa-user-times"></i>
             </div>
         </div>
+<<<<<<< HEAD
         <div class="stat-value">
             <?php
             $inactive_query = "SELECT COUNT(*) as count FROM users WHERE statut != 'actif'";
@@ -92,6 +120,9 @@ try {
             echo number_format($inactive_stmt->fetch()['count']);
             ?>
         </div>
+=======
+        <div class="stat-value"><?php echo number_format($total_inactive_users); ?></div>
+>>>>>>> de209a5df705cdb1aa0c9ffa8b75087f1ac9e0cb
         <div class="stat-label">Comptes Inactifs</div>
     </div>
 </div>
@@ -159,8 +190,14 @@ try {
                         </div>
                     </td>
                     <td>
+<<<<<<< HEAD
                         <span class="status-badge status-<?php echo $user['statut'] == 'actif' ? 'active' : 'inactive'; ?>">
                             <?php echo ucfirst($user['statut']); ?>
+=======
+                        <?php $normalizedStatus = strtolower(trim($user['statut'] ?? '')); ?>
+                        <span class="status-badge status-<?php echo $normalizedStatus === 'actif' ? 'active' : 'inactive'; ?>">
+                            <?php echo $normalizedStatus === 'actif' ? 'Actif' : (ucfirst(trim($user['statut'] ?? 'Inactif')) ?: 'Inactif'); ?>
+>>>>>>> de209a5df705cdb1aa0c9ffa8b75087f1ac9e0cb
                         </span>
                     </td>
                     <td>
@@ -175,10 +212,18 @@ try {
                                     data-bs-toggle="tooltip" title="Modifier">
                                 <i class="fas fa-edit"></i>
                             </button>
+<<<<<<< HEAD
                             <button class="btn btn-sm btn-outline-<?php echo $user['statut'] == 'actif' ? 'danger' : 'success'; ?>" 
                                     onclick="toggleUserStatus(<?php echo $user['id']; ?>, '<?php echo $user['statut']; ?>')"
                                     data-bs-toggle="tooltip" title="<?php echo $user['statut'] == 'actif' ? 'Désactiver' : 'Activer'; ?>">
                                 <i class="fas fa-<?php echo $user['statut'] == 'actif' ? 'ban' : 'check'; ?>"></i>
+=======
+                            <?php $isActive = ($normalizedStatus === 'actif'); ?>
+                            <button class="btn btn-sm btn-outline-<?php echo $isActive ? 'danger' : 'success'; ?>" 
+                                    onclick="toggleUserStatus(<?php echo $user['id']; ?>, '<?php echo $normalizedStatus; ?>')"
+                                    data-bs-toggle="tooltip" title="<?php echo $isActive ? 'Désactiver' : 'Activer'; ?>">
+                                <i class="fas fa-<?php echo $isActive ? 'ban' : 'check'; ?>"></i>
+>>>>>>> de209a5df705cdb1aa0c9ffa8b75087f1ac9e0cb
                             </button>
                         </div>
                     </td>
@@ -332,8 +377,39 @@ function viewUser(userId) {
 }
 
 function editUser(userId) {
+<<<<<<< HEAD
     // Ouvrir modal d'édition (à implémenter)
     showToast('Fonctionnalité d\'édition en cours de développement', 'info');
+=======
+    // Récupérer les données de l'utilisateur via AJAX
+    fetch(`actions/get_user.php?id=${userId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const user = data.user;
+                
+                // Remplir le formulaire avec les données de l'utilisateur
+                document.getElementById('edit_user_id').value = user.id;
+                document.getElementById('edit_prenom').value = user.prenom;
+                document.getElementById('edit_nom').value = user.nom;
+                document.getElementById('edit_email').value = user.email;
+                document.getElementById('edit_telephone').value = user.telephone;
+                document.getElementById('edit_date_naissance').value = user.date_naissance || '';
+                document.getElementById('edit_adresse').value = user.adresse || '';
+                document.getElementById('edit_statut').value = user.statut;
+                
+                // Ouvrir le modal d'édition
+                const editModal = new bootstrap.Modal(document.getElementById('editUserModal'));
+                editModal.show();
+            } else {
+                showToast(data.message || 'Erreur lors de la récupération des données', 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            showToast('Erreur de connexion', 'danger');
+        });
+>>>>>>> de209a5df705cdb1aa0c9ffa8b75087f1ac9e0cb
 }
 
 function toggleUserStatus(userId, currentStatus) {
@@ -367,6 +443,102 @@ function toggleUserStatus(userId, currentStatus) {
         });
     }
 }
+<<<<<<< HEAD
 </script>
 
+=======
+// Fonction pour sauvegarder les modifications d'un utilisateur
+function saveUserChanges() {
+    const form = document.getElementById('editUserForm');
+    
+    if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+    }
+    
+    const formData = new FormData(form);
+    
+    fetch('actions/update_user.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast(data.message, 'success');
+            // Fermer le modal
+            bootstrap.Modal.getInstance(document.getElementById('editUserModal')).hide();
+            // Recharger la page après un court délai
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showToast(data.message || 'Erreur lors de la modification', 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+        showToast('Erreur de connexion', 'danger');
+    });
+}
+</script>
+
+<!-- Modal d'édition d'utilisateur -->
+<div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="editUserModalLabel">Modifier l'utilisateur</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editUserForm">
+                <div class="modal-body">
+                    <input type="hidden" id="edit_user_id" name="user_id">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Prénom *</label>
+                            <input type="text" class="form-control" id="edit_prenom" name="prenom" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Nom *</label>
+                            <input type="text" class="form-control" id="edit_nom" name="nom" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Email *</label>
+                            <input type="email" class="form-control" id="edit_email" name="email" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Téléphone</label>
+                            <input type="tel" class="form-control" id="edit_telephone" name="telephone">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Date de naissance</label>
+                            <input type="date" class="form-control" id="edit_date_naissance" name="date_naissance">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Adresse</label>
+                            <input type="text" class="form-control" id="edit_adresse" name="adresse">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Nouveau mot de passe</label>
+                            <input type="password" class="form-control" id="edit_mot_de_passe" name="mot_de_passe" placeholder="Laisser vide pour ne pas modifier">
+                            <small class="form-text text-muted">Laisser vide pour conserver le mot de passe actuel</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Statut</label>
+                            <select class="form-select" id="edit_statut" name="statut">
+                                <option value="actif">Actif</option>
+                                <option value="inactif">Inactif</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="button" class="btn btn-primary" onclick="saveUserChanges()">Enregistrer les modifications</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+>>>>>>> de209a5df705cdb1aa0c9ffa8b75087f1ac9e0cb
 <?php include 'includes/footer.php'; ?>
