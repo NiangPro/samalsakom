@@ -126,21 +126,10 @@ include 'includes/header.php';
                     <p class="page-description">Consultez l'historique complet de vos cotisations et paiements</p>
                 </div>
                 <div class="col-auto">
-<<<<<<< HEAD
                     <button class="btn btn-outline-primary" onclick="exportHistorique()">
                         <i class="fas fa-download me-2"></i>
                         Exporter
                     </button>
-=======
-                    <button class="btn btn-outline-primary me-2" onclick="exportHistorique()">
-                        <i class="fas fa-download me-2"></i>
-                        Exporter
-                    </button>
-                    <button class="btn btn-primary" onclick="rechargerPortefeuille()">
-                        <i class="fas fa-plus me-2"></i>
-                        Recharger
-                    </button>
->>>>>>> de209a5df705cdb1aa0c9ffa8b75087f1ac9e0cb
                 </div>
             </div>
         </div>
@@ -204,16 +193,11 @@ include 'includes/header.php';
                         <select name="type" class="form-select">
                             <option value="">Tous les types</option>
                             <option value="cotisation" <?= $type_filter === 'cotisation' ? 'selected' : '' ?>>Cotisations</option>
-<<<<<<< HEAD
                             <option value="recharge" <?= $type_filter === 'recharge' ? 'selected' : '' ?>>Recharges</option>
                             <option value="retrait" <?= $type_filter === 'retrait' ? 'selected' : '' ?>>Retraits</option>
                             <option value="bonus" <?= $type_filter === 'bonus' ? 'selected' : '' ?>>Bonus</option>
                             <option value="remboursement" <?= $type_filter === 'remboursement' ? 'selected' : '' ?>>Remboursements</option>
                             <option value="penalite" <?= $type_filter === 'penalite' ? 'selected' : '' ?>>Pénalités</option>
-=======
-                            <option value="retrait" <?= $type_filter === 'retrait' ? 'selected' : '' ?>>Retraits</option>
-                            <option value="bonus" <?= $type_filter === 'bonus' ? 'selected' : '' ?>>Bonus</option>
->>>>>>> de209a5df705cdb1aa0c9ffa8b75087f1ac9e0cb
                         </select>
                     </div>
                     <div class="col-md-3">
@@ -302,17 +286,10 @@ include 'includes/header.php';
                                             </span>
                                         </td>
                                         <td>
-<<<<<<< HEAD
                                             <?php if (!empty($transaction['methode_paiement'])): ?>
                                                 <div class="d-flex align-items-center">
                                                     <i class="fas <?= getPaymentIcon($transaction['methode_paiement']) ?> me-2"></i>
                                                     <?= ucfirst(str_replace('_', ' ', $transaction['methode_paiement'])) ?>
-=======
-                                            <?php if ($transaction['mode_paiement']): ?>
-                                                <div class="d-flex align-items-center">
-                                                    <i class="fas <?= getPaymentIcon($transaction['mode_paiement']) ?> me-2"></i>
-                                                    <?= ucfirst(str_replace('_', ' ', $transaction['mode_paiement'])) ?>
->>>>>>> de209a5df705cdb1aa0c9ffa8b75087f1ac9e0cb
                                                 </div>
                                             <?php else: ?>
                                                 <span class="text-muted">-</span>
@@ -339,7 +316,6 @@ include 'includes/header.php';
                                             </span>
                                         </td>
                                         <td>
-<<<<<<< HEAD
                                             <?php if (!empty($transaction['reference_paiement'])): ?>
                                                 <code class="small"><?= htmlspecialchars($transaction['reference_paiement']) ?></code>
                                             <?php else: ?>
@@ -348,12 +324,6 @@ include 'includes/header.php';
                                                 $ref = 'TXN' . str_pad($transaction['id'], 6, '0', STR_PAD_LEFT) . date('ymd', strtotime($transaction['date_creation']));
                                                 ?>
                                                 <code class="small text-muted"><?= $ref ?></code>
-=======
-                                            <?php if ($transaction['reference_paiement']): ?>
-                                                <code class="small"><?= htmlspecialchars($transaction['reference_paiement']) ?></code>
-                                            <?php else: ?>
-                                                <span class="text-muted">-</span>
->>>>>>> de209a5df705cdb1aa0c9ffa8b75087f1ac9e0cb
                                             <?php endif; ?>
                                         </td>
                                         <td>
@@ -489,64 +459,4 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-<<<<<<< HEAD
-=======
-<!-- Modal Recharge -->
-<div class="modal fade" id="walletModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="walletModalTitle">Recharger le Portefeuille</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body" id="walletModalBody"></div>
-        </div>
-    </div>
-    </div>
-
-<script>
-// Recharge depuis l'historique
-function rechargerPortefeuille() {
-    fetch('actions/get_recharge_form.php')
-        .then(r => r.json())
-        .then(data => {
-            if (data.success) {
-                document.getElementById('walletModalTitle').textContent = 'Recharger le Portefeuille';
-                document.getElementById('walletModalBody').innerHTML = data.html;
-                new bootstrap.Modal(document.getElementById('walletModal')).show();
-            } else {
-                showToast(data.message || 'Erreur de chargement', 'danger');
-            }
-        })
-        .catch(() => showToast('Erreur de connexion', 'danger'));
-}
-
-function confirmerRecharge() {
-    const form = document.getElementById('rechargeForm');
-    if (!form || !form.reportValidity()) return;
-    const formData = new FormData(form);
-    fetch('actions/process_recharge.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            montant: parseInt(formData.get('montant'), 10),
-            mode_paiement: formData.get('mode_paiement')
-        })
-    })
-    .then(r => r.json())
-    .then(d => {
-        if (d.success) {
-            showToast(d.message, 'success');
-            const m = bootstrap.Modal.getInstance(document.getElementById('walletModal'));
-            if (m) m.hide();
-            setTimeout(() => location.reload(), 1200);
-        } else {
-            showToast(d.message || 'Erreur lors de la recharge', 'danger');
-        }
-    })
-    .catch(() => showToast('Erreur de connexion', 'danger'));
-}
-</script>
-
->>>>>>> de209a5df705cdb1aa0c9ffa8b75087f1ac9e0cb
 <?php include 'includes/footer.php'; ?>

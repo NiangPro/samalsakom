@@ -15,27 +15,15 @@ try {
     $db = $database->getConnection();
     $user_id = $_SESSION['user_id'];
     
-<<<<<<< HEAD
     // Calculer le solde total
     $solde_query = "SELECT 
         COALESCE(SUM(CASE WHEN statut = 'completed' AND type_transaction IN ('cotisation', 'recharge', 'bonus') THEN montant ELSE 0 END), 0) as total_entrees,
         COALESCE(SUM(CASE WHEN statut = 'completed' AND type_transaction = 'retrait' THEN montant ELSE 0 END), 0) as total_retire
-=======
-    // Calculer le solde total (robuste face aux enums manquants)
-    // total_cotise: cotisations terminées liées aux tontines
-    // total_recharge: recharges complétées (type='bonus' OU référence commençant par RC)
-    // total_retire: retraits complétés (type='retrait' OU référence commençant par RT)
-    $solde_query = "SELECT 
-        COALESCE(SUM(CASE WHEN statut = 'completed' AND type_transaction = 'cotisation' THEN montant ELSE 0 END), 0) as total_cotise,
-        COALESCE(SUM(CASE WHEN statut = 'completed' AND (type_transaction = 'bonus' OR (reference_paiement IS NOT NULL AND reference_paiement LIKE 'RC%')) THEN montant ELSE 0 END), 0) as total_recharge,
-        COALESCE(SUM(CASE WHEN statut = 'completed' AND (type_transaction = 'retrait' OR (reference_paiement IS NOT NULL AND reference_paiement LIKE 'RT%')) THEN montant ELSE 0 END), 0) as total_retire
->>>>>>> de209a5df705cdb1aa0c9ffa8b75087f1ac9e0cb
         FROM cotisations WHERE user_id = ?";
     $stmt = $db->prepare($solde_query);
     $stmt->execute([$user_id]);
     $solde_data = $stmt->fetch();
     
-<<<<<<< HEAD
     $solde_disponible = $solde_data['total_entrees'] - $solde_data['total_retire'];
     
     // Détail pour l'affichage
@@ -48,9 +36,6 @@ try {
     $stmt = $db->prepare($detail_query);
     $stmt->execute([$user_id]);
     $detail_data = $stmt->fetch();
-=======
-    $solde_disponible = $solde_data['total_cotise'] + $solde_data['total_recharge'] - $solde_data['total_retire'];
->>>>>>> de209a5df705cdb1aa0c9ffa8b75087f1ac9e0cb
     
     // Récupérer les tontines actives
     $tontines_query = "SELECT t.*, p.date_participation, 
@@ -117,7 +102,6 @@ include 'includes/header.php';
                         <div class="row align-items-center">
                             <div class="col-md-8">
                                 <h3 class="text-white mb-1">Solde Disponible</h3>
-<<<<<<< HEAD
                                 <h1 class="text-white fw-bold mb-3 solde-amount"><?= number_format($solde_disponible, 0, ',', ' ') ?> FCFA</h1>
                                 <div class="row text-white-50">
                                     <div class="col-3">
@@ -135,21 +119,6 @@ include 'includes/header.php';
                                     <div class="col-3">
                                         <small>Retiré</small>
                                         <div class="fw-semibold retire-amount"><?= number_format($detail_data['total_retire'], 0, ',', ' ') ?></div>
-=======
-                                <h1 class="text-white fw-bold mb-3"><?= number_format($solde_disponible, 0, ',', ' ') ?> FCFA</h1>
-                                <div class="row text-white-50">
-                                    <div class="col-4">
-                                        <small>Cotisé</small>
-                                        <div class="fw-semibold"><?= number_format($solde_data['total_cotise'], 0, ',', ' ') ?></div>
-                                    </div>
-                                    <div class="col-4">
-                                        <small>Rechargé</small>
-                                        <div class="fw-semibold"><?= number_format($solde_data['total_recharge'], 0, ',', ' ') ?></div>
-                                    </div>
-                                    <div class="col-4">
-                                        <small>Retiré</small>
-                                        <div class="fw-semibold"><?= number_format($solde_data['total_retire'], 0, ',', ' ') ?></div>
->>>>>>> de209a5df705cdb1aa0c9ffa8b75087f1ac9e0cb
                                     </div>
                                 </div>
                             </div>
@@ -264,7 +233,6 @@ include 'includes/header.php';
     </div>
 </div>
 
-<<<<<<< HEAD
 <!-- Modal Recharger -->
 <div class="modal fade" id="rechargerModal" tabindex="-1">
     <div class="modal-dialog">
@@ -382,8 +350,6 @@ include 'includes/header.php';
     </div>
 </div>
 
-=======
->>>>>>> de209a5df705cdb1aa0c9ffa8b75087f1ac9e0cb
 <style>
 .wallet-card {
     background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
@@ -408,7 +374,6 @@ include 'includes/header.php';
 }
 </style>
 
-<<<<<<< HEAD
 <script>
 function demanderRetrait() {
     new bootstrap.Modal(document.getElementById('retirerModal')).show();
@@ -642,102 +607,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
-=======
-<!-- Modales Recharge / Retrait -->
-<div class="modal fade" id="walletModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="walletModalTitle"></h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body" id="walletModalBody"></div>
-        </div>
-    </div>
-</div>
-
-<script>
-function demanderRetrait() {
-    fetch('actions/get_retrait_form.php')
-        .then(r => r.json())
-        .then(data => {
-            if (data.success) {
-                document.getElementById('walletModalTitle').textContent = 'Demande de Retrait';
-                document.getElementById('walletModalBody').innerHTML = data.html;
-                new bootstrap.Modal(document.getElementById('walletModal')).show();
-            } else {
-                showToast(data.message || 'Erreur de chargement', 'danger');
-            }
-        })
-        .catch(() => showToast('Erreur de connexion', 'danger'));
-}
-
-function rechargerPortefeuille() {
-    fetch('actions/get_recharge_form.php')
-        .then(r => r.json())
-        .then(data => {
-            if (data.success) {
-                document.getElementById('walletModalTitle').textContent = 'Recharger le Portefeuille';
-                document.getElementById('walletModalBody').innerHTML = data.html;
-                new bootstrap.Modal(document.getElementById('walletModal')).show();
-            } else {
-                showToast(data.message || 'Erreur de chargement', 'danger');
-            }
-        })
-        .catch(() => showToast('Erreur de connexion', 'danger'));
-}
-
-function confirmerRecharge() {
-    const form = document.getElementById('rechargeForm');
-    if (!form || !form.reportValidity()) return;
-    const formData = new FormData(form);
-    fetch('actions/process_recharge.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            montant: parseInt(formData.get('montant'), 10),
-            mode_paiement: formData.get('mode_paiement')
-        })
-    })
-    .then(r => r.json())
-    .then(d => {
-        if (d.success) {
-            showToast(d.message, 'success');
-            bootstrap.Modal.getInstance(document.getElementById('walletModal')).hide();
-            setTimeout(() => location.reload(), 1200);
-        } else {
-            showToast(d.message || 'Erreur lors de la recharge', 'danger');
-        }
-    })
-    .catch(() => showToast('Erreur de connexion', 'danger'));
-}
-
-function confirmerRetrait() {
-    const form = document.getElementById('retraitForm');
-    if (!form || !form.reportValidity()) return;
-    const formData = new FormData(form);
-    fetch('actions/process_retrait.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            montant: parseInt(formData.get('montant'), 10),
-            mode_paiement: formData.get('mode_paiement'),
-            coordonnees: formData.get('coordonnees')
-        })
-    })
-    .then(r => r.json())
-    .then(d => {
-        if (d.success) {
-            showToast(d.message, 'success');
-            bootstrap.Modal.getInstance(document.getElementById('walletModal')).hide();
-            setTimeout(() => location.reload(), 1200);
-        } else {
-            showToast(d.message || 'Erreur lors du retrait', 'danger');
-        }
-    })
-    .catch(() => showToast('Erreur de connexion', 'danger'));
-}
->>>>>>> de209a5df705cdb1aa0c9ffa8b75087f1ac9e0cb
 </script>
 
 <?php include 'includes/footer.php'; ?>
