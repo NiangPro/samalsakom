@@ -14,7 +14,7 @@ try {
     $db = $database->getConnection();
     
     $cotisation_id = (int)$_POST['cotisation_id'];
-    $mode_paiement = $_POST['mode_paiement'];
+    $mode_paiement = $_POST['methode_paiement'];
     $telephone = $_POST['telephone'] ?? '';
     $reference_bancaire = $_POST['reference_bancaire'] ?? '';
     $user_id = $_SESSION['user_id'];
@@ -58,7 +58,7 @@ try {
         // Mettre à jour la cotisation comme payée
         $query = "UPDATE cotisations SET 
                   statut = 'completed',
-                  mode_paiement = ?,
+                  methode_paiement = ?,
                   reference_paiement = ?,
                   date_paiement = NOW()
                   WHERE id = ?";
@@ -81,7 +81,7 @@ try {
         // Marquer le paiement comme échoué
         $query = "UPDATE cotisations SET 
                   statut = 'failed',
-                  mode_paiement = ?,
+                  methode_paiement = ?,
                   reference_paiement = ?,
                   date_paiement = NOW()
                   WHERE id = ?";

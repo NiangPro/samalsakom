@@ -10,7 +10,6 @@ if (!isset($_SESSION['user_id'])) {
 require_once '../../config/database.php';
 
 try {
-<<<<<<< HEAD
     $database = new Database();
     $db = $database->getConnection();
     
@@ -34,11 +33,12 @@ try {
         throw new Exception("Numéro de téléphone requis");
     }
     
-    // Créer la transaction de recharge
-    $query = "INSERT INTO cotisations (user_id, montant, type_transaction, methode_paiement, numero_telephone, statut, date_creation) 
-              VALUES (?, ?, 'recharge', ?, ?, 'pending', NOW())";
+    // Créer la transaction de recharge directement comme complétée
+    $reference = 'RC' . date('YmdHis') . rand(1000, 9999);
+    $query = "INSERT INTO cotisations (user_id, montant, type_transaction, methode_paiement, numero_telephone, statut, reference_paiement, date_creation, date_paiement) 
+              VALUES (?, ?, 'recharge', ?, ?, 'completed', ?, NOW(), NOW())";
     $stmt = $db->prepare($query);
-    $result = $stmt->execute([$user_id, $montant, $methode, $numero]);
+    $result = $stmt->execute([$user_id, $montant, $methode, $numero, $reference]);
     
     if (!$result) {
         throw new Exception("Erreur lors de l'enregistrement de la transaction");
@@ -46,59 +46,29 @@ try {
     
     $transaction_id = $db->lastInsertId();
     
-    // Log pour débogage
-    error_log("Recharge créée - User: $user_id, Montant: $montant, Transaction ID: $transaction_id");
+    // Créer une notification pour l'utilisateur
+    $notif_query = "INSERT INTO notifications (user_id, titre, message, type, date_creation) 
+                    VALUES (?, 'Recharge effectuée', ?, 'success', NOW())";
+    $notif_stmt = $db->prepare($notif_query);
+    $notif_message = "Votre portefeuille a été rechargé de " . number_format($montant, 0, ',', ' ') . " FCFA via " . ucfirst(str_replace('_', ' ', $methode));
+    $notif_stmt->execute([$user_id, $notif_message]);
     
-    // Simuler le processus de paiement (en réalité, on intégrerait avec l'API de l'opérateur)
-    // Pour la démo, on va automatiquement confirmer après quelques secondes
+    // Log pour débogage
+    error_log("Recharge effectuée - User: $user_id, Montant: $montant, Transaction ID: $transaction_id, Référence: $reference");
     
     echo json_encode([
         'success' => true, 
-        'message' => 'Demande de recharge envoyée. Vous allez recevoir un SMS pour confirmer.',
-        'transaction_id' => $transaction_id
+        'message' => 'Recharge effectuée avec succès! Votre solde a été mis à jour.',
+        'transaction_id' => $transaction_id,
+        'reference' => $reference,
+        'montant' => $montant
     ]);
     
 } catch (Exception $e) {
-    echo json_encode(['success' => false, 'message' => $e->getMessage()]);
-}
-?>
-=======
-    $input = json_decode(file_get_contents('php://input'), true);
-    $montant = isset($input['montant']) ? (int)$input['montant'] : 0;
-    $mode = $input['mode_paiement'] ?? '';
-
-    if ($montant < 1000) {
-        throw new Exception('Le montant minimum est 1000 FCFA');
-    }
-    if (!in_array($mode, ['orange_money', 'wave', 'virement'])) {
-        throw new Exception('Mode de paiement invalide');
-    }
-
-    $database = new Database();
-    $db = $database->getConnection();
-
-    // Associer la recharge à une participation existante (FK requis). Prendre la plus récente.
-    $pstmt = $db->prepare("SELECT id AS participation_id, tontine_id FROM participations WHERE user_id = ? ORDER BY date_participation DESC LIMIT 1");
-    $pstmt->execute([$_SESSION['user_id']]);
-    $part = $pstmt->fetch();
-
-    if (!$part) {
-        throw new Exception("Vous devez participer à une tontine avant de recharger le portefeuille");
-    }
-
-    $query = "INSERT INTO cotisations (user_id, tontine_id, participation_id, montant, date_cotisation, statut, type_transaction, mode_paiement, reference_paiement, date_paiement) 
-              VALUES (?, ?, ?, ?, CURDATE(), 'completed', 'cotisation', ?, CONCAT('RC', DATE_FORMAT(NOW(), '%Y%m%d%H%i%s')), NOW())";
-    $stmt = $db->prepare($query);
-    $stmt->execute([$_SESSION['user_id'], $part['tontine_id'], $part['participation_id'], $montant, $mode]);
-
-    echo json_encode(['success' => true, 'message' => 'Recharge effectuée avec succès']);
-} catch (Exception $e) {
+    error_log("Erreur recharge: " . $e->getMessage());
     echo json_encode(['success' => false, 'message' => $e->getMessage()]);
 } catch (PDOException $e) {
-    error_log('Recharge error: ' . $e->getMessage());
+    error_log("Erreur PDO recharge: " . $e->getMessage());
     echo json_encode(['success' => false, 'message' => 'Erreur de base de données']);
 }
 ?>
-
-
->>>>>>> de209a5df705cdb1aa0c9ffa8b75087f1ac9e0cb

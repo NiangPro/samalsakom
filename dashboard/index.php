@@ -175,19 +175,120 @@ try {
     </div>
 </div>
 
-<!-- Contenu principal -->
-<div class="row g-4">
-    <!-- Mes Tontines Récentes -->
-    <div class="col-lg-8" data-aos="fade-up" data-aos-delay="300">
+<!-- Cotisations en attente -->
+<div class="row g-4 mt-4" data-aos="fade-up" data-aos-delay="350">
+    <div class="col-12">
+        <div class="dashboard-card">
+            <div class="card-header-modern">
+                <h3 class="card-title">
+                    <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                    Cotisations à Payer
+                </h3>
+                <div class="d-flex gap-2">
+                    <?php if ($retards_count > 0): ?>
+                        <span class="badge bg-danger"><?php echo $retards_count; ?> en retard</span>
+                    <?php endif; ?>
+                    <span class="badge bg-warning"><?php echo $cotisations_pending_count - $retards_count; ?> en attente</span>
+                </div>
+            </div>
+            <div class="card-body-modern">
+                <?php if ($cotisations_pending_count > 0): ?>
+                    <?php
+                    // Récupérer les cotisations en attente avec calcul des retards
+                    $query = "SELECT c.*, t.nom as tontine_nom,
+                              CASE 
+                                WHEN c.date_cotisation < CURDATE() THEN DATEDIFF(CURDATE(), c.date_cotisation)
+                                ELSE 0
+                              END as jours_retard,
+                              CASE 
+                                WHEN c.date_cotisation < CURDATE() THEN 'en_retard'
+                                ELSE 'en_attente'
+                              END as statut_echeance
+                              FROM cotisations c 
+                              JOIN tontines t ON c.tontine_id = t.id 
+                              WHERE c.user_id = ? AND c.statut = 'pending'
+                              ORDER BY c.date_cotisation ASC 
+                              LIMIT 5";
+                    $stmt = $db->prepare($query);
+                    $stmt->execute([$_SESSION['user_id']]);
+                    $cotisations_pending = $stmt->fetchAll();
+                    
+                    // Compter les retards
+                    $retards_count = count(array_filter($cotisations_pending, function($c) {
+                        return $c['statut_echeance'] === 'en_retard';
+                    }));
+                    ?>
+                    <div class="row g-3">
+                        <?php foreach ($cotisations_pending as $cotisation): ?>
+                        <?php 
+                        $date_echeance = new DateTime($cotisation['date_cotisation']);
+                        $now = new DateTime();
+                        $diff = $now->diff($date_echeance);
+                        $is_overdue = $date_echeance < $now;
+                        ?>
+                        <div class="col-md-4">
+                            <div class="payment-card <?php echo $is_overdue ? 'overdue' : 'pending'; ?>">
+                                <div class="payment-header">
+                                    <h6 class="mb-1"><?php echo htmlspecialchars($cotisation['tontine_nom']); ?></h6>
+                                    <small class="text-muted"><?php echo ucfirst($cotisation['frequence']); ?></small>
+                                </div>
+                                <div class="payment-amount">
+                                    <?php echo number_format($cotisation['montant'], 0, ',', ' '); ?> FCFA
+                                </div>
+                                <div class="payment-due">
+                                    <i class="fas fa-calendar-alt me-1"></i>
+                                    <?php echo $date_echeance->format('d/m/Y'); ?>
+                                    <?php if ($is_overdue): ?>
+                                        <span class="text-danger ms-2">
+                                            <i class="fas fa-exclamation-circle"></i>
+                                            Retard: <?php echo $diff->days; ?>j
+                                        </span>
+                                    <?php else: ?>
+                                        <span class="text-warning ms-2">
+                                            Dans <?php echo $diff->days; ?> jour(s)
+                                        </span>
+                                    <?php endif; ?>
+                                </div>
+                                <div class="payment-actions mt-2">
+                                    <a href="paiements.php" class="btn btn-success-modern btn-sm w-100">
+                                        <i class="fas fa-credit-card me-1"></i>
+                                        Payer maintenant
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <?php endforeach; ?>
+                    </div>
+                    
+                    <?php if ($cotisations_pending_count > 3): ?>
+                    <div class="text-center mt-3">
+                        <a href="paiements.php" class="btn btn-outline-primary">
+                            Voir les <?php echo $cotisations_pending_count - 3; ?> autres cotisations
+                        </a>
+                    </div>
+                    <?php endif; ?>
+                <?php else: ?>
+                    <div class="text-center py-4">
+                        <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                        <h5>Toutes vos cotisations sont à jour !</h5>
+                        <p class="text-muted">Aucun paiement en attente</p>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Activité récente -->
+<div class="row g-4 mt-4" data-aos="fade-up" data-aos-delay="400">
+    <div class="col-lg-8">
         <div class="dashboard-card">
             <div class="card-header-modern">
                 <h3 class="card-title">Mes Tontines Récentes</h3>
-                <a href="mes-tontines.php" class="btn btn-outline-modern btn-sm">
-                    <i class="fas fa-eye"></i> Voir tout
-                </a>
+                <a href="tontines.php" class="btn btn-outline-modern btn-sm">Voir toutes</a>
             </div>
             <div class="card-body-modern">
-                <?php if (!empty($dernieres_tontines)): ?>
+                <?php if (!empty($recent_tontines)): ?>
                     <div class="table-modern">
                         <table class="table">
                             <thead>
@@ -200,21 +301,13 @@ try {
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php foreach ($dernieres_tontines as $tontine): ?>
+                                <?php foreach ($recent_tontines as $tontine): ?>
                                 <tr>
                                     <td>
-                                        <div>
-                                            <div class="fw-semibold"><?php echo htmlspecialchars($tontine['nom']); ?></div>
-                                            <small class="text-muted">
-                                                Participé le <?php echo date('d/m/Y', strtotime($tontine['date_participation'])); ?>
-                                            </small>
-                                        </div>
+                                        <div class="fw-semibold"><?php echo htmlspecialchars($tontine['nom']); ?></div>
+                                        <small class="text-muted"><?php echo date('d/m/Y', strtotime($tontine['date_creation'])); ?></small>
                                     </td>
-                                    <td>
-                                        <span class="fw-bold text-success">
-                                            <?php echo number_format($tontine['montant_cotisation'], 0, ',', ' '); ?> FCFA
-                                        </span>
-                                    </td>
+                                    <td><?php echo number_format($tontine['montant_cotisation'], 0, ',', ' '); ?> FCFA</td>
                                     <td>
                                         <span class="badge bg-info">
                                             <?php echo ucfirst($tontine['frequence']); ?>
@@ -243,13 +336,11 @@ try {
                         </table>
                     </div>
                 <?php else: ?>
-                    <div class="text-center py-5">
-                        <i class="fas fa-piggy-bank fa-3x text-muted mb-3"></i>
-                        <h5 class="text-muted">Aucune tontine pour le moment</h5>
-                        <p class="text-muted mb-4">Commencez votre parcours d'épargne en rejoignant une tontine</p>
-                        <a href="decouvrir-tontines.php" class="btn btn-primary-modern">
-                            <i class="fas fa-search"></i> Découvrir des Tontines
-                        </a>
+                    <div class="text-center py-4">
+                        <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                        <h5>Aucune tontine</h5>
+                        <p class="text-muted">Rejoignez une tontine pour commencer</p>
+                        <a href="tontines.php" class="btn btn-primary-modern btn-sm">Découvrir</a>
                     </div>
                 <?php endif; ?>
             </div>
@@ -287,6 +378,13 @@ try {
                                     <?php echo date('d/m/Y H:i', strtotime($cotisation['date_creation'])); ?>
                                 </div>
                             </div>
+                            <div class="activity-actions">
+                                <button class="btn btn-outline-primary btn-sm" 
+                                        onclick="voirDetailsSidebar(<?php echo $cotisation['id']; ?>)"
+                                        title="Voir détails">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
                         </div>
                         <?php endforeach; ?>
                     </div>
@@ -321,6 +419,52 @@ try {
 </div>
 
 <style>
+.payment-card {
+    border: 2px solid var(--gray-200);
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    background: white;
+    transition: var(--transition-fast);
+    height: 100%;
+}
+
+.payment-card.pending {
+    border-color: #ffc107;
+    background: rgba(255, 193, 7, 0.05);
+}
+
+.payment-card.overdue {
+    border-color: #dc3545;
+    background: rgba(220, 53, 69, 0.05);
+}
+
+.payment-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.payment-header h6 {
+    color: var(--dark-color);
+    font-weight: 600;
+}
+
+.payment-amount {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin: 0.5rem 0;
+}
+
+.payment-due {
+    font-size: 0.875rem;
+    color: var(--gray-600);
+    margin-bottom: 0.5rem;
+}
+
+.payment-actions .btn {
+    font-size: 0.875rem;
+    padding: 0.5rem 1rem;
+}
 .activity-feed {
     max-height: 400px;
     overflow-y: auto;
@@ -329,8 +473,13 @@ try {
 .activity-item {
     display: flex;
     align-items: flex-start;
-    padding: 1rem 0;
-    border-bottom: 1px solid var(--gray-200);
+    padding: 1rem;
+    border-bottom: 1px solid #f0f0f0;
+    transition: background-color 0.2s ease;
+}
+
+.activity-item:hover {
+    background-color: #f8f9fa;
 }
 
 .activity-item:last-child {
@@ -344,10 +493,37 @@ try {
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
     margin-right: 1rem;
     flex-shrink: 0;
 }
+
+.activity-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.activity-actions {
+    margin-left: 1rem;
+    flex-shrink: 0;
+}
+
+.activity-text {
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+}
+
+.activity-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.25rem;
+}
+
+.activity-time {
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
 
 .activity-content {
     flex: 1;
@@ -430,6 +606,97 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+// Fonction pour voir les détails depuis le sidebar historique
+function voirDetailsSidebar(transactionId) {
+    fetch(`actions/get_transaction_details.php?id=${transactionId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Créer le modal s'il n'existe pas
+                let modal = document.getElementById('detailsModalSidebar');
+                if (!modal) {
+                    modal = document.createElement('div');
+                    modal.className = 'modal fade';
+                    modal.id = 'detailsModalSidebar';
+                    modal.setAttribute('tabindex', '-1');
+                    modal.innerHTML = `
+                        <div class="modal-dialog modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">
+                                        <i class="fas fa-receipt me-2"></i>
+                                        Détails de la Transaction
+                                    </h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body" id="detailsModalBodySidebar">
+                                    <!-- Contenu chargé dynamiquement -->
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    document.body.appendChild(modal);
+                }
+                
+                document.getElementById('detailsModalBodySidebar').innerHTML = data.html;
+                const bootstrapModal = new bootstrap.Modal(modal);
+                bootstrapModal.show();
+            } else {
+                showToast(data.message || 'Erreur lors du chargement des détails', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            showToast('Erreur lors du chargement des détails', 'error');
+        });
+}
+
+// Fonction pour afficher les notifications toast
+function showToast(message, type = 'info') {
+    // Créer le conteneur de toasts s'il n'existe pas
+    let toastContainer = document.getElementById('toastContainer');
+    if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.id = 'toastContainer';
+        toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+        toastContainer.style.zIndex = '9999';
+        document.body.appendChild(toastContainer);
+    }
+    
+    // Créer le toast
+    const toastId = 'toast-' + Date.now();
+    const toast = document.createElement('div');
+    toast.id = toastId;
+    toast.className = `toast align-items-center text-bg-${type === 'error' ? 'danger' : (type === 'success' ? 'success' : 'primary')} border-0`;
+    toast.setAttribute('role', 'alert');
+    toast.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body">
+                <i class="fas fa-${type === 'error' ? 'exclamation-circle' : (type === 'success' ? 'check-circle' : 'info-circle')} me-2"></i>
+                ${message}
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    `;
+    
+    toastContainer.appendChild(toast);
+    
+    // Initialiser et afficher le toast
+    const bootstrapToast = new bootstrap.Toast(toast, {
+        autohide: true,
+        delay: 5000
+    });
+    bootstrapToast.show();
+    
+    // Supprimer le toast du DOM après qu'il soit caché
+    toast.addEventListener('hidden.bs.toast', function() {
+        toast.remove();
+    });
+}
 </script>
 
 <?php include 'includes/footer.php'; ?>

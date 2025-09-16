@@ -63,7 +63,7 @@ try {
             <label class="form-label fw-semibold">Mode de Paiement</label>
             <div class="payment-methods">
                 <div class="form-check payment-option">
-                    <input class="form-check-input" type="radio" name="mode_paiement" value="orange_money" id="orange_money" checked>
+                    <input class="form-check-input" type="radio" name="methode_paiement" value="orange_money" id="orange_money" checked>
                     <label class="form-check-label" for="orange_money">
                         <div class="payment-method-card">
                             <div class="payment-icon bg-warning">
@@ -78,7 +78,7 @@ try {
                 </div>
                 
                 <div class="form-check payment-option">
-                    <input class="form-check-input" type="radio" name="mode_paiement" value="wave" id="wave">
+                    <input class="form-check-input" type="radio" name="methode_paiement" value="wave" id="wave">
                     <label class="form-check-label" for="wave">
                         <div class="payment-method-card">
                             <div class="payment-icon bg-primary">
@@ -93,7 +93,7 @@ try {
                 </div>
                 
                 <div class="form-check payment-option">
-                    <input class="form-check-input" type="radio" name="mode_paiement" value="virement" id="virement">
+                    <input class="form-check-input" type="radio" name="methode_paiement" value="virement" id="virement">
                     <label class="form-check-label" for="virement">
                         <div class="payment-method-card">
                             <div class="payment-icon bg-success">
@@ -183,7 +183,7 @@ try {
     
     <script>
     // Gestion des modes de paiement
-    document.querySelectorAll(\'input[name="mode_paiement"]\').forEach(radio => {
+    document.querySelectorAll(\'input[name="methode_paiement"]\').forEach(radio => {
         radio.addEventListener(\'change\', function() {
             const phoneSection = document.getElementById(\'phoneSection\');
             const bankSection = document.getElementById(\'bankSection\');

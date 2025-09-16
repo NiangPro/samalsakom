@@ -17,7 +17,7 @@ try {
         </div>
         <div class="mb-3">
             <label class="form-label">Mode de paiement</label>
-            <select class="form-select" name="mode_paiement" required>
+            <select class="form-select" name="methode_paiement" required>
                 <option value="orange_money">Orange Money</option>
                 <option value="wave">Wave</option>
                 <option value="virement">Virement</option>

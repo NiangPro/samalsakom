@@ -15,13 +15,6 @@ try {
     $count_stmt->execute();
     $total_users = $count_stmt->fetch()['total'];
     $total_pages = ceil($total_users / $limit);
-<<<<<<< HEAD
-    
-    // Récupérer les utilisateurs
-    $query = "SELECT * FROM users ORDER BY date_creation DESC LIMIT ? OFFSET ?";
-    $stmt = $db->prepare($query);
-    $stmt->execute([$limit, $offset]);
-=======
 
     // Compter le total d'utilisateurs actifs/inactifs (pour cohérence des métriques)
     // Compte 'actif' avec normalisation (trim/lower) pour éviter les écarts de casse/espaces
@@ -42,7 +35,6 @@ try {
     $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
     $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
     $stmt->execute();
->>>>>>> de209a5df705cdb1aa0c9ffa8b75087f1ac9e0cb
     $users = $stmt->fetchAll();
     
 } catch (PDOException $e) {
@@ -73,18 +65,7 @@ try {
                 <i class="fas fa-user-check"></i>
             </div>
         </div>
-<<<<<<< HEAD
-        <div class="stat-value">
-            <?php
-            $active_query = "SELECT COUNT(*) as count FROM users WHERE statut = 'actif'";
-            $active_stmt = $db->prepare($active_query);
-            $active_stmt->execute();
-            echo number_format($active_stmt->fetch()['count']);
-            ?>
-        </div>
-=======
         <div class="stat-value"><?php echo number_format($total_active_users); ?></div>
->>>>>>> de209a5df705cdb1aa0c9ffa8b75087f1ac9e0cb
         <div class="stat-label">Utilisateurs Actifs</div>
     </div>
     
@@ -111,18 +92,7 @@ try {
                 <i class="fas fa-user-times"></i>
             </div>
         </div>
-<<<<<<< HEAD
-        <div class="stat-value">
-            <?php
-            $inactive_query = "SELECT COUNT(*) as count FROM users WHERE statut != 'actif'";
-            $inactive_stmt = $db->prepare($inactive_query);
-            $inactive_stmt->execute();
-            echo number_format($inactive_stmt->fetch()['count']);
-            ?>
-        </div>
-=======
         <div class="stat-value"><?php echo number_format($total_inactive_users); ?></div>
->>>>>>> de209a5df705cdb1aa0c9ffa8b75087f1ac9e0cb
         <div class="stat-label">Comptes Inactifs</div>
     </div>
 </div>
@@ -190,14 +160,9 @@ try {
                         </div>
                     </td>
                     <td>
-<<<<<<< HEAD
-                        <span class="status-badge status-<?php echo $user['statut'] == 'actif' ? 'active' : 'inactive'; ?>">
-                            <?php echo ucfirst($user['statut']); ?>
-=======
                         <?php $normalizedStatus = strtolower(trim($user['statut'] ?? '')); ?>
                         <span class="status-badge status-<?php echo $normalizedStatus === 'actif' ? 'active' : 'inactive'; ?>">
                             <?php echo $normalizedStatus === 'actif' ? 'Actif' : (ucfirst(trim($user['statut'] ?? 'Inactif')) ?: 'Inactif'); ?>
->>>>>>> de209a5df705cdb1aa0c9ffa8b75087f1ac9e0cb
                         </span>
                     </td>
                     <td>
@@ -212,18 +177,11 @@ try {
                                     data-bs-toggle="tooltip" title="Modifier">
                                 <i class="fas fa-edit"></i>
                             </button>
-<<<<<<< HEAD
-                            <button class="btn btn-sm btn-outline-<?php echo $user['statut'] == 'actif' ? 'danger' : 'success'; ?>" 
-                                    onclick="toggleUserStatus(<?php echo $user['id']; ?>, '<?php echo $user['statut']; ?>')"
-                                    data-bs-toggle="tooltip" title="<?php echo $user['statut'] == 'actif' ? 'Désactiver' : 'Activer'; ?>">
-                                <i class="fas fa-<?php echo $user['statut'] == 'actif' ? 'ban' : 'check'; ?>"></i>
-=======
                             <?php $isActive = ($normalizedStatus === 'actif'); ?>
                             <button class="btn btn-sm btn-outline-<?php echo $isActive ? 'danger' : 'success'; ?>" 
                                     onclick="toggleUserStatus(<?php echo $user['id']; ?>, '<?php echo $normalizedStatus; ?>')"
                                     data-bs-toggle="tooltip" title="<?php echo $isActive ? 'Désactiver' : 'Activer'; ?>">
                                 <i class="fas fa-<?php echo $isActive ? 'ban' : 'check'; ?>"></i>
->>>>>>> de209a5df705cdb1aa0c9ffa8b75087f1ac9e0cb
                             </button>
                         </div>
                     </td>
@@ -377,10 +335,6 @@ function viewUser(userId) {
 }
 
 function editUser(userId) {
-<<<<<<< HEAD
-    // Ouvrir modal d'édition (à implémenter)
-    showToast('Fonctionnalité d\'édition en cours de développement', 'info');
-=======
     // Récupérer les données de l'utilisateur via AJAX
     fetch(`actions/get_user.php?id=${userId}`)
         .then(response => response.json())
@@ -409,7 +363,6 @@ function editUser(userId) {
             console.error('Erreur:', error);
             showToast('Erreur de connexion', 'danger');
         });
->>>>>>> de209a5df705cdb1aa0c9ffa8b75087f1ac9e0cb
 }
 
 function toggleUserStatus(userId, currentStatus) {
@@ -443,10 +396,6 @@ function toggleUserStatus(userId, currentStatus) {
         });
     }
 }
-<<<<<<< HEAD
-</script>
-
-=======
 // Fonction pour sauvegarder les modifications d'un utilisateur
 function saveUserChanges() {
     const form = document.getElementById('editUserForm');
@@ -540,5 +489,4 @@ function saveUserChanges() {
     </div>
 </div>
 
->>>>>>> de209a5df705cdb1aa0c9ffa8b75087f1ac9e0cb
 <?php include 'includes/footer.php'; ?>

@@ -10,7 +10,6 @@ if (!isset($_SESSION['user_id'])) {
 require_once '../../config/database.php';
 
 try {
-<<<<<<< HEAD
     $database = new Database();
     $db = $database->getConnection();
     
@@ -51,11 +50,12 @@ try {
         throw new Exception("Numéro de téléphone requis");
     }
     
-    // Créer la demande de retrait
-    $query = "INSERT INTO cotisations (user_id, montant, type_transaction, methode_paiement, numero_telephone, compte_bancaire, motif, statut, date_creation) 
-              VALUES (?, ?, 'retrait', ?, ?, ?, ?, 'completed', NOW())";
+    // Créer la transaction de retrait directement comme complétée
+    $reference = 'RT' . date('YmdHis') . rand(1000, 9999);
+    $query = "INSERT INTO cotisations (user_id, montant, type_transaction, methode_paiement, numero_telephone, compte_bancaire, motif, statut, reference_paiement, date_creation, date_paiement) 
+              VALUES (?, ?, 'retrait', ?, ?, ?, ?, 'completed', ?, NOW(), NOW())";
     $stmt = $db->prepare($query);
-    $result = $stmt->execute([$user_id, $montant, $methode, $numero, $compte_bancaire, $motif]);
+    $result = $stmt->execute([$user_id, $montant, $methode, $numero, $compte_bancaire, $motif, $reference]);
     
     if (!$result) {
         throw new Exception("Erreur lors de l'enregistrement de la demande de retrait");
@@ -63,76 +63,29 @@ try {
     
     $transaction_id = $db->lastInsertId();
     
+    // Créer une notification pour l'utilisateur
+    $notif_query = "INSERT INTO notifications (user_id, titre, message, type, date_creation) 
+                    VALUES (?, 'Retrait effectué', ?, 'info', NOW())";
+    $notif_stmt = $db->prepare($notif_query);
+    $notif_message = "Retrait de " . number_format($montant, 0, ',', ' ') . " FCFA effectué via " . ucfirst(str_replace('_', ' ', $methode));
+    $notif_stmt->execute([$user_id, $notif_message]);
+    
     // Log pour débogage
-    error_log("Retrait traité - User: $user_id, Montant: $montant, Transaction ID: $transaction_id");
+    error_log("Retrait effectué - User: $user_id, Montant: $montant, Transaction ID: $transaction_id, Référence: $reference");
     
     echo json_encode([
         'success' => true, 
-        'message' => 'Demande de retrait soumise avec succès. Vous recevrez une notification une fois traitée.',
-        'transaction_id' => $transaction_id
+        'message' => 'Retrait effectué avec succès! Votre solde a été mis à jour.',
+        'transaction_id' => $transaction_id,
+        'reference' => $reference,
+        'montant' => $montant
     ]);
     
 } catch (Exception $e) {
-    echo json_encode(['success' => false, 'message' => $e->getMessage()]);
-}
-?>
-=======
-    $input = json_decode(file_get_contents('php://input'), true);
-    $montant = isset($input['montant']) ? (int)$input['montant'] : 0;
-    $mode = $input['mode_paiement'] ?? '';
-    $coord = trim($input['coordonnees'] ?? '');
-
-    if ($montant < 1000) {
-        throw new Exception('Le montant minimum est 1000 FCFA');
-    }
-    if (!in_array($mode, ['orange_money', 'wave', 'virement'])) {
-        throw new Exception('Mode de réception invalide');
-    }
-    if ($coord === '') {
-        throw new Exception('Les coordonnées sont requises');
-    }
-
-    $database = new Database();
-    $db = $database->getConnection();
-
-    // Recalculer le solde disponible
-    $q = "SELECT 
-            COALESCE(SUM(CASE WHEN statut = 'completed' AND type_transaction = 'cotisation' THEN montant ELSE 0 END), 0) as total_cotise,
-            COALESCE(SUM(CASE WHEN statut = 'completed' AND type_transaction = 'retrait' THEN montant ELSE 0 END), 0) as total_retire,
-            COALESCE(SUM(CASE WHEN statut = 'completed' AND type_transaction = 'bonus' THEN montant ELSE 0 END), 0) as total_bonus
-          FROM cotisations WHERE user_id = ?";
-    $stmt = $db->prepare($q);
-    $stmt->execute([$_SESSION['user_id']]);
-    $s = $stmt->fetch();
-    $solde = (int)$s['total_cotise'] + (int)$s['total_bonus'] - (int)$s['total_retire'];
-
-    if ($montant > $solde) {
-        throw new Exception('Montant supérieur au solde disponible');
-    }
-
-    // Associer à une participation existante pour respecter les contraintes FK
-    $pstmt = $db->prepare("SELECT id AS participation_id, tontine_id FROM participations WHERE user_id = ? ORDER BY date_participation DESC LIMIT 1");
-    $pstmt->execute([$_SESSION['user_id']]);
-    $part = $pstmt->fetch();
-
-    if (!$part) {
-        throw new Exception("Aucune participation trouvée pour effectuer un retrait");
-    }
-
-    // Enregistrer le retrait comme complété pour impacter immédiatement le solde
-    $query = "INSERT INTO cotisations (user_id, tontine_id, participation_id, montant, date_cotisation, statut, type_transaction, mode_paiement, reference_paiement, date_paiement) 
-              VALUES (?, ?, ?, ?, CURDATE(), 'completed', 'retrait', ?, CONCAT('RT', DATE_FORMAT(NOW(), '%Y%m%d%H%i%s')), NOW())";
-    $stmt = $db->prepare($query);
-    $stmt->execute([$_SESSION['user_id'], $part['tontine_id'], $part['participation_id'], $montant, $mode]);
-
-    echo json_encode(['success' => true, 'message' => 'Demande de retrait enregistrée. Traitement en cours.']);
-} catch (Exception $e) {
+    error_log("Erreur retrait: " . $e->getMessage());
     echo json_encode(['success' => false, 'message' => $e->getMessage()]);
 } catch (PDOException $e) {
-    error_log('Retrait error: ' . $e->getMessage());
+    error_log("Erreur PDO retrait: " . $e->getMessage());
     echo json_encode(['success' => false, 'message' => 'Erreur de base de données']);
 }
 ?>
-
-
->>>>>>> de209a5df705cdb1aa0c9ffa8b75087f1ac9e0cb

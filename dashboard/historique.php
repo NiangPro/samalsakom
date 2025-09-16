@@ -136,7 +136,7 @@ include 'includes/header.php';
 
         <!-- Statistiques rapides -->
         <div class="row mb-4">
-            <div class="col-lg-3 col-md-6 mb-3">
+            <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
                 <div class="stat-card">
                     <div class="stat-icon bg-primary">
                         <i class="fas fa-list"></i>
@@ -147,10 +147,43 @@ include 'includes/header.php';
                     </div>
                 </div>
             </div>
-            <div class="col-lg-3 col-md-6 mb-3">
+            <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
                 <div class="stat-card">
                     <div class="stat-icon bg-success">
                         <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-number"><?= $stats['transactions_reussies'] ?></div>
+                        <div class="stat-label">Paiements Réussis</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                <div class="stat-card">
+                    <div class="stat-icon bg-warning">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-number"><?= $stats['total_transactions'] - $stats['transactions_reussies'] - $stats['transactions_echouees'] ?></div>
+                        <div class="stat-label">En Attente</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                <div class="stat-card">
+                    <div class="stat-icon bg-danger">
+                        <i class="fas fa-times-circle"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-number"><?= $stats['transactions_echouees'] ?></div>
+                        <div class="stat-label">Échecs</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                <div class="stat-card">
+                    <div class="stat-icon bg-success">
+                        <i class="fas fa-money-bill-wave"></i>
                     </div>
                     <div class="stat-content">
                         <div class="stat-number"><?= number_format($stats['total_paye'], 0, ',', ' ') ?></div>
@@ -158,10 +191,10 @@ include 'includes/header.php';
                     </div>
                 </div>
             </div>
-            <div class="col-lg-3 col-md-6 mb-3">
+            <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
                 <div class="stat-card">
                     <div class="stat-icon bg-warning">
-                        <i class="fas fa-clock"></i>
+                        <i class="fas fa-hourglass-half"></i>
                     </div>
                     <div class="stat-content">
                         <div class="stat-number"><?= number_format($stats['total_pending'], 0, ',', ' ') ?></div>
@@ -169,24 +202,33 @@ include 'includes/header.php';
                     </div>
                 </div>
             </div>
-            <div class="col-lg-3 col-md-6 mb-3">
-                <div class="stat-card">
-                    <div class="stat-icon bg-info">
-                        <i class="fas fa-percentage"></i>
-                    </div>
-                    <div class="stat-content">
-                        <div class="stat-number">
-                            <?= $stats['total_transactions'] > 0 ? round(($stats['transactions_reussies'] / $stats['total_transactions']) * 100) : 0 ?>%
-                        </div>
-                        <div class="stat-label">Taux de Réussite</div>
-                    </div>
-                </div>
-            </div>
         </div>
 
-        <!-- Filtres -->
+        <!-- Filtres et raccourcis -->
         <div class="card modern-card mb-4">
             <div class="card-body">
+                <!-- Raccourcis rapides -->
+                <div class="mb-3">
+                    <h6 class="mb-2">Filtres rapides :</h6>
+                    <div class="btn-group btn-group-sm" role="group">
+                        <a href="historique.php" class="btn <?= empty($status_filter) ? 'btn-primary' : 'btn-outline-primary' ?>">
+                            <i class="fas fa-list me-1"></i>Tous
+                        </a>
+                        <a href="historique.php?status=completed" class="btn <?= $status_filter === 'completed' ? 'btn-success' : 'btn-outline-success' ?>">
+                            <i class="fas fa-check-circle me-1"></i>Paiements effectués
+                        </a>
+                        <a href="historique.php?status=pending" class="btn <?= $status_filter === 'pending' ? 'btn-warning' : 'btn-outline-warning' ?>">
+                            <i class="fas fa-clock me-1"></i>Non réglés
+                        </a>
+                        <a href="historique.php?status=failed" class="btn <?= $status_filter === 'failed' ? 'btn-danger' : 'btn-outline-danger' ?>">
+                            <i class="fas fa-times-circle me-1"></i>Échecs
+                        </a>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <!-- Filtres détaillés -->
                 <form method="GET" class="row g-3">
                     <div class="col-md-3">
                         <label class="form-label">Type de transaction</label>
@@ -201,13 +243,21 @@ include 'includes/header.php';
                         </select>
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">Statut</label>
+                        <label class="form-label">Statut de paiement</label>
                         <select name="status" class="form-select">
                             <option value="">Tous les statuts</option>
-                            <option value="pending" <?= $status_filter === 'pending' ? 'selected' : '' ?>>En attente</option>
-                            <option value="completed" <?= $status_filter === 'completed' ? 'selected' : '' ?>>Complété</option>
-                            <option value="failed" <?= $status_filter === 'failed' ? 'selected' : '' ?>>Échoué</option>
-                            <option value="cancelled" <?= $status_filter === 'cancelled' ? 'selected' : '' ?>>Annulé</option>
+                            <option value="pending" <?= $status_filter === 'pending' ? 'selected' : '' ?>>
+                                <i class="fas fa-clock"></i> En attente (Non réglé)
+                            </option>
+                            <option value="completed" <?= $status_filter === 'completed' ? 'selected' : '' ?>>
+                                <i class="fas fa-check"></i> Complété (Payé)
+                            </option>
+                            <option value="failed" <?= $status_filter === 'failed' ? 'selected' : '' ?>>
+                                <i class="fas fa-times"></i> Échoué
+                            </option>
+                            <option value="cancelled" <?= $status_filter === 'cancelled' ? 'selected' : '' ?>>
+                                <i class="fas fa-ban"></i> Annulé
+                            </option>
                         </select>
                     </div>
                     <div class="col-md-3">
@@ -281,7 +331,16 @@ include 'includes/header.php';
                                             </span>
                                         </td>
                                         <td>
-                                            <span class="fw-bold text-success">
+                                            <?php 
+                                            $montant_class = 'text-success';
+                                            $montant_icon = 'fa-plus';
+                                            if (in_array($transaction['type_transaction'], ['retrait', 'penalite'])) {
+                                                $montant_class = 'text-danger';
+                                                $montant_icon = 'fa-minus';
+                                            }
+                                            ?>
+                                            <span class="fw-bold <?= $montant_class ?>">
+                                                <i class="fas <?= $montant_icon ?> me-1"></i>
                                                 <?= number_format($transaction['montant'], 0, ',', ' ') ?> FCFA
                                             </span>
                                         </td>
@@ -297,23 +356,34 @@ include 'includes/header.php';
                                         </td>
                                         <td>
                                             <?php
-                                            $status_class = [
-                                                'pending' => 'warning',
-                                                'completed' => 'success',
-                                                'failed' => 'danger',
-                                                'cancelled' => 'secondary'
-                                            ][$transaction['statut']] ?? 'secondary';
+                                            $status_config = [
+                                                'pending' => ['class' => 'warning', 'text' => 'En attente', 'icon' => 'fa-clock'],
+                                                'completed' => ['class' => 'success', 'text' => 'Payé', 'icon' => 'fa-check-circle'],
+                                                'failed' => ['class' => 'danger', 'text' => 'Échoué', 'icon' => 'fa-times-circle'],
+                                                'cancelled' => ['class' => 'secondary', 'text' => 'Annulé', 'icon' => 'fa-ban']
+                                            ];
                                             
-                                            $status_text = [
-                                                'pending' => 'En attente',
-                                                'completed' => 'Complété',
-                                                'failed' => 'Échoué',
-                                                'cancelled' => 'Annulé'
-                                            ][$transaction['statut']] ?? $transaction['statut'];
+                                            $config = $status_config[$transaction['statut']] ?? ['class' => 'secondary', 'text' => $transaction['statut'], 'icon' => 'fa-question'];
                                             ?>
-                                            <span class="badge bg-<?= $status_class ?>">
-                                                <?= $status_text ?>
+                                            <span class="badge bg-<?= $config['class'] ?> d-flex align-items-center gap-1" style="width: fit-content;">
+                                                <i class="fas <?= $config['icon'] ?>"></i>
+                                                <?= $config['text'] ?>
                                             </span>
+                                            <?php if ($transaction['statut'] === 'pending'): ?>
+                                                <div class="mt-1">
+                                                    <small class="text-muted">
+                                                        <i class="fas fa-info-circle me-1"></i>
+                                                        Paiement non réglé
+                                                    </small>
+                                                </div>
+                                            <?php elseif ($transaction['statut'] === 'completed'): ?>
+                                                <div class="mt-1">
+                                                    <small class="text-success">
+                                                        <i class="fas fa-check me-1"></i>
+                                                        Paiement effectué
+                                                    </small>
+                                                </div>
+                                            <?php endif; ?>
                                         </td>
                                         <td>
                                             <?php if (!empty($transaction['reference_paiement'])): ?>
@@ -339,6 +409,12 @@ include 'includes/header.php';
                                                             data-bs-toggle="tooltip" title="Télécharger reçu">
                                                         <i class="fas fa-download"></i>
                                                     </button>
+                                                <?php elseif ($transaction['statut'] === 'pending'): ?>
+                                                    <button class="btn btn-outline-warning" 
+                                                            onclick="relancerPaiement(<?= $transaction['id'] ?>)"
+                                                            data-bs-toggle="tooltip" title="Relancer le paiement">
+                                                        <i class="fas fa-redo"></i>
+                                                    </button>
                                                 <?php endif; ?>
                                             </div>
                                         </td>
@@ -354,11 +430,19 @@ include 'includes/header.php';
                             <nav aria-label="Pagination des transactions">
                                 <ul class="pagination justify-content-center mb-0">
                                     <?php if ($page > 1): ?>
-                                        <li class="page-item">
-                                            <a class="page-link" href="?page=<?= $page - 1 ?>&<?= http_build_query($_GET) ?>">
-                                                <i class="fas fa-chevron-left"></i>
-                                            </a>
-                                        </li>
+                                        <td>
+                                            <button class="btn btn-outline-primary btn-sm me-1" onclick="voirDetails(<?php echo $transaction['id']; ?>)">
+                                                <i class="fas fa-eye"></i> Voir détails
+                                            </button>
+                                            <?php if ($transaction['statut'] == 'completed'): ?>
+                                                <a href="actions/generate_invoice.php?id=<?php echo $transaction['id']; ?>" 
+                                                   class="btn btn-outline-success btn-sm" 
+                                                   target="_blank"
+                                                   title="Télécharger la facture">
+                                                    <i class="fas fa-download"></i> Facture
+                                                </a>
+                                            <?php endif; ?>
+                                        </td>
                                     <?php endif; ?>
                                     
                                     <?php for ($i = max(1, $page - 2); $i <= min($total_pages, $page + 2); $i++): ?>
@@ -382,9 +466,25 @@ include 'includes/header.php';
                     <?php endif; ?>
                 <?php else: ?>
                     <div class="text-center py-5">
-                        <i class="fas fa-history fa-3x text-muted mb-3"></i>
-                        <h5 class="text-muted">Aucune transaction trouvée</h5>
-                        <p class="text-muted">Vos transactions apparaîtront ici une fois que vous aurez effectué des paiements.</p>
+                        <?php if (!empty($status_filter)): ?>
+                            <?php if ($status_filter === 'pending'): ?>
+                                <i class="fas fa-clock fa-3x text-warning mb-3"></i>
+                                <h5 class="text-muted">Aucun paiement en attente</h5>
+                                <p class="text-muted">Tous vos paiements sont à jour ! Félicitations.</p>
+                            <?php elseif ($status_filter === 'completed'): ?>
+                                <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                                <h5 class="text-muted">Aucun paiement effectué</h5>
+                                <p class="text-muted">Vous n'avez pas encore effectué de paiements.</p>
+                            <?php elseif ($status_filter === 'failed'): ?>
+                                <i class="fas fa-times-circle fa-3x text-danger mb-3"></i>
+                                <h5 class="text-muted">Aucun paiement échoué</h5>
+                                <p class="text-muted">Parfait ! Tous vos paiements se sont bien déroulés.</p>
+                            <?php endif; ?>
+                        <?php else: ?>
+                            <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">Aucune transaction trouvée</h5>
+                            <p class="text-muted">Vos transactions apparaîtront ici une fois que vous aurez effectué des paiements.</p>
+                        <?php endif; ?>
                         <a href="decouvrir-tontines.php" class="btn btn-primary">
                             <i class="fas fa-search me-2"></i>
                             Découvrir les tontines
@@ -425,17 +525,30 @@ function getPaymentIcon($mode) {
 <script>
 function voirDetails(transactionId) {
     fetch(`actions/get_transaction_details.php?id=${transactionId}`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                document.getElementById('detailsModalBody').innerHTML = data.html;
-                const modal = new bootstrap.Modal(document.getElementById('detailsModal'));
-                modal.show();
-            } else {
-                showToast(data.message, 'error');
+        .then(response => {
+            console.log('Response status:', response.status);
+            console.log('Response headers:', response.headers);
+            return response.text();
+        })
+        .then(text => {
+            console.log('Response text:', text);
+            try {
+                const data = JSON.parse(text);
+                if (data.success) {
+                    document.getElementById('detailsModalBody').innerHTML = data.html;
+                    const modal = new bootstrap.Modal(document.getElementById('detailsModal'));
+                    modal.show();
+                } else {
+                    showToast(data.message || 'Erreur inconnue', 'error');
+                }
+            } catch (e) {
+                console.error('JSON Parse Error:', e);
+                console.error('Raw response:', text);
+                showToast('Erreur de format de réponse du serveur', 'error');
             }
         })
         .catch(error => {
+            console.error('Fetch Error:', error);
             showToast('Erreur lors du chargement des détails', 'error');
         });
 }
@@ -448,6 +561,78 @@ function exportHistorique() {
     const params = new URLSearchParams(window.location.search);
     params.set('export', '1');
     window.open(`actions/export_historique.php?${params.toString()}`, '_blank');
+}
+
+// Fonction pour afficher les notifications toast
+function showToast(message, type = 'info') {
+    // Créer le conteneur de toasts s'il n'existe pas
+    let toastContainer = document.getElementById('toastContainer');
+    if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.id = 'toastContainer';
+        toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+        toastContainer.style.zIndex = '9999';
+        document.body.appendChild(toastContainer);
+    }
+    
+    // Créer le toast
+    const toastId = 'toast-' + Date.now();
+    const toast = document.createElement('div');
+    toast.id = toastId;
+    toast.className = `toast align-items-center text-bg-${type === 'error' ? 'danger' : (type === 'success' ? 'success' : 'primary')} border-0`;
+    toast.setAttribute('role', 'alert');
+    toast.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body">
+                <i class="fas fa-${type === 'error' ? 'exclamation-circle' : (type === 'success' ? 'check-circle' : 'info-circle')} me-2"></i>
+                ${message}
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    `;
+    
+    toastContainer.appendChild(toast);
+    
+    // Initialiser et afficher le toast
+    const bootstrapToast = new bootstrap.Toast(toast, {
+        autohide: true,
+        delay: 5000
+    });
+    bootstrapToast.show();
+    
+    // Supprimer le toast du DOM après qu'il soit caché
+    toast.addEventListener('hidden.bs.toast', function() {
+        toast.remove();
+    });
+}
+
+function relancerPaiement(transactionId) {
+    if (confirm('Voulez-vous relancer ce paiement en attente ?')) {
+        fetch(`actions/relancer_paiement.php`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                transaction_id: transactionId
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast(data.message, 'success');
+                // Recharger la page après 2 secondes
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
+            } else {
+                showToast(data.message, 'error');
+            }
+        })
+        .catch(error => {
+            showToast('Erreur lors de la relance du paiement', 'error');
+        });
+    }
 }
 
 // Initialiser les tooltips
