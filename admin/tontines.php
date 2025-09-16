@@ -17,7 +17,7 @@ try {
     $total_pages = ceil($total_tontines / $limit);
     
     // Récupérer les tontines avec informations sur le créateur
-    $query = "SELECT t.*, u.prenom, u.nom, u.email,
+    $query = "SELECT t.*, u.prenom as createur_prenom, u.nom as createur_nom, u.email,
               (SELECT COUNT(*) FROM participations p WHERE p.tontine_id = t.id) as nb_participants
               FROM tontines t 
               LEFT JOIN users u ON t.createur_id = u.id 
@@ -165,7 +165,7 @@ try {
                     </td>
                     <td>
                         <div>
-                            <div class="fw-medium"><?php echo htmlspecialchars($tontine['prenom'] . ' ' . $tontine['nom']); ?></div>
+                            <div class="fw-medium"><?php echo htmlspecialchars($tontine['createur_prenom'] . ' ' . $tontine['createur_nom']); ?></div>
                             <small class="text-muted"><?php echo htmlspecialchars($tontine['email']); ?></small>
                         </div>
                     </td>

@@ -40,7 +40,7 @@ try {
     $montant = number_format((float)$tx['montant'], 0, ',', ' ') . ' FCFA';
     $ref = htmlspecialchars($tx['reference_paiement'] ?? '-');
     $tontine = htmlspecialchars($tx['tontine_nom'] ?? '');
-    $mode = $tx['mode_paiement'] ? ucfirst(str_replace('_', ' ', $tx['mode_paiement'])) : '-';
+    $mode = '-'; // Mode de paiement non disponible
 
     echo "<!DOCTYPE html><html lang=\"fr\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>{$title}</title>
     <link href=\"https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css\" rel=\"stylesheet\">

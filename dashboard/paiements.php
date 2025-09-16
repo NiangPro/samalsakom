@@ -16,7 +16,7 @@ try {
               END as statut_echeance
               FROM cotisations c 
               LEFT JOIN tontines t ON c.tontine_id = t.id 
-              WHERE c.user_id = ? AND c.statut = 'pending' AND c.type_transaction = 'cotisation'
+              WHERE c.user_id = ? AND c.statut = 'pending' AND c.type_transaction IN ('cotisation', 'recharge', 'retrait')
               ORDER BY c.date_cotisation ASC";
     $stmt = $db->prepare($query);
     $stmt->execute([$_SESSION['user_id']]);
@@ -83,7 +83,7 @@ try {
                     <table class="table">
                         <thead>
                             <tr>
-                                <th>Tontine</th>
+                                <th>Type/Tontine</th>
                                 <th>Montant</th>
                                 <th>Échéance</th>
                                 <th>Retard</th>
@@ -94,8 +94,13 @@ try {
                             <?php foreach ($cotisations_en_retard as $cotisation): ?>
                             <tr class="table-danger">
                                 <td>
-                                    <div class="fw-semibold"><?php echo htmlspecialchars($cotisation['tontine_nom']); ?></div>
-                                    <small class="text-muted"><?php echo ucfirst($cotisation['frequence']); ?></small>
+                                    <?php if ($cotisation['type_transaction'] === 'cotisation' && $cotisation['tontine_nom']): ?>
+                                        <div class="fw-semibold"><?php echo htmlspecialchars($cotisation['tontine_nom']); ?></div>
+                                        <small class="text-muted">Cotisation <?php echo ucfirst($cotisation['frequence']); ?></small>
+                                    <?php else: ?>
+                                        <div class="fw-semibold"><?php echo ucfirst($cotisation['type_transaction']); ?></div>
+                                        <small class="text-muted">Transaction <?php echo $cotisation['type_transaction']; ?></small>
+                                    <?php endif; ?>
                                 </td>
                                 <td>
                                     <span class="fw-bold text-danger">
@@ -136,7 +141,7 @@ try {
     <div class="col-12">
         <div class="dashboard-card">
             <div class="card-header-modern">
-                <h3 class="card-title">Cotisations à Payer</h3>
+                <h3 class="card-title">Paiements à Effectuer</h3>
                 <div class="d-flex gap-2">
                     <?php if (!empty($cotisations_en_retard)): ?>
                         <span class="badge bg-danger"><?php echo count($cotisations_en_retard); ?> en retard</span>
@@ -150,7 +155,7 @@ try {
                         <table class="table">
                             <thead>
                                 <tr>
-                                    <th>Tontine</th>
+                                    <th>Type/Tontine</th>
                                     <th>Montant</th>
                                     <th>Échéance</th>
                                     <th>Actions</th>
@@ -160,8 +165,13 @@ try {
                                 <?php foreach ($cotisations_en_attente as $cotisation): ?>
                                 <tr>
                                     <td>
-                                        <div class="fw-semibold"><?php echo htmlspecialchars($cotisation['tontine_nom']); ?></div>
-                                        <small class="text-muted"><?php echo ucfirst($cotisation['frequence']); ?></small>
+                                        <?php if ($cotisation['tontine_nom']): ?>
+                                            <div class="fw-semibold"><?php echo htmlspecialchars($cotisation['tontine_nom']); ?></div>
+                                            <small class="text-muted">Cotisation <?php echo ucfirst($cotisation['frequence']); ?></small>
+                                        <?php else: ?>
+                                            <div class="fw-semibold"><?php echo ucfirst($cotisation['type_transaction']); ?></div>
+                                            <small class="text-muted">Transaction <?php echo $cotisation['type_transaction']; ?></small>
+                                        <?php endif; ?>
                                     </td>
                                     <td>
                                         <span class="fw-bold text-success">

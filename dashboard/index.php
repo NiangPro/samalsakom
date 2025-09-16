@@ -25,7 +25,14 @@ try {
                                  WHERE user_id = ? AND statut = 'pending'";
     $stmt = $db->prepare($query_cotisations_pending);
     $stmt->execute([$_SESSION['user_id']]);
-    $cotisations_pending = $stmt->fetch()['count'];
+    $cotisations_pending_count = $stmt->fetch()['count'];
+    
+    // Compter les retards
+    $query_retards = "SELECT COUNT(*) as count FROM cotisations 
+                      WHERE user_id = ? AND statut = 'pending' AND date_cotisation < CURDATE()";
+    $stmt = $db->prepare($query_retards);
+    $stmt->execute([$_SESSION['user_id']]);
+    $retards_count = $stmt->fetch()['count'];
     
     // Prochaine échéance
     $query_prochaine_echeance = "SELECT MIN(date_cotisation) as prochaine FROM cotisations 
@@ -102,11 +109,11 @@ try {
                 <i class="fas fa-clock"></i>
             </div>
         </div>
-        <div class="stat-value"><?php echo $cotisations_pending; ?></div>
+        <div class="stat-value"><?php echo $cotisations_pending_count; ?></div>
         <div class="stat-label">Cotisations en Attente</div>
-        <div class="stat-change <?php echo $cotisations_pending > 0 ? 'negative' : 'positive'; ?>">
-            <i class="fas fa-<?php echo $cotisations_pending > 0 ? 'exclamation-triangle' : 'check-circle'; ?>"></i>
-            <?php echo $cotisations_pending > 0 ? 'À régler rapidement' : 'Tout est à jour'; ?>
+        <div class="stat-change <?php echo $cotisations_pending_count > 0 ? 'negative' : 'positive'; ?>">
+            <i class="fas fa-<?php echo $cotisations_pending_count > 0 ? 'exclamation-triangle' : 'check-circle'; ?>"></i>
+            <?php echo $cotisations_pending_count > 0 ? 'À régler rapidement' : 'Tout est à jour'; ?>
         </div>
     </div>
     
@@ -211,15 +218,15 @@ try {
                               LIMIT 5";
                     $stmt = $db->prepare($query);
                     $stmt->execute([$_SESSION['user_id']]);
-                    $cotisations_pending = $stmt->fetchAll();
+                    $cotisations_list = $stmt->fetchAll();
                     
                     // Compter les retards
-                    $retards_count = count(array_filter($cotisations_pending, function($c) {
+                    $retards_count = count(array_filter($cotisations_list, function($c) {
                         return $c['statut_echeance'] === 'en_retard';
                     }));
                     ?>
                     <div class="row g-3">
-                        <?php foreach ($cotisations_pending as $cotisation): ?>
+                        <?php foreach ($cotisations_list as $cotisation): ?>
                         <?php 
                         $date_echeance = new DateTime($cotisation['date_cotisation']);
                         $now = new DateTime();
@@ -340,7 +347,7 @@ try {
                         <i class="fas fa-users fa-3x text-muted mb-3"></i>
                         <h5>Aucune tontine</h5>
                         <p class="text-muted">Rejoignez une tontine pour commencer</p>
-                        <a href="tontines.php" class="btn btn-primary-modern btn-sm">Découvrir</a>
+                        <a href="decouvrir-tontines.php" class="btn btn-primary-modern btn-sm">Découvrir</a>
                     </div>
                 <?php endif; ?>
             </div>

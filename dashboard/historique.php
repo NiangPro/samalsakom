@@ -403,7 +403,7 @@ include 'includes/header.php';
                                                         data-bs-toggle="tooltip" title="Voir détails">
                                                     <i class="fas fa-eye"></i>
                                                 </button>
-                                                <?php if ($transaction['statut'] === 'completed' && $transaction['reference_paiement']): ?>
+                                                <?php if ($transaction['statut'] === 'completed'): ?>
                                                     <button class="btn btn-outline-success" 
                                                             onclick="telechargerRecu(<?= $transaction['id'] ?>)"
                                                             data-bs-toggle="tooltip" title="Télécharger reçu">

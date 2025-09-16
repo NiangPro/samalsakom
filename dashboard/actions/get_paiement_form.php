@@ -19,7 +19,7 @@ try {
     // Récupérer les détails de la cotisation
     $query = "SELECT c.*, t.nom as tontine_nom, t.frequence 
               FROM cotisations c 
-              JOIN tontines t ON c.tontine_id = t.id 
+              LEFT JOIN tontines t ON c.tontine_id = t.id 
               WHERE c.id = ? AND c.user_id = ? AND c.statut = 'pending'";
     $stmt = $db->prepare($query);
     $stmt->execute([$cotisation_id, $user_id]);
@@ -38,8 +38,10 @@ try {
             <div class="bg-light p-3 rounded">
                 <div class="row">
                     <div class="col-6">
-                        <small class="text-muted">Tontine</small>
-                        <div class="fw-semibold">' . htmlspecialchars($cotisation['tontine_nom']) . '</div>
+                        <small class="text-muted">Type</small>
+                        <div class="fw-semibold">' . 
+                        ($cotisation['tontine_nom'] ? htmlspecialchars($cotisation['tontine_nom']) : ucfirst($cotisation['type_transaction'])) 
+                        . '</div>
                     </div>
                     <div class="col-6">
                         <small class="text-muted">Montant</small>
@@ -53,7 +55,7 @@ try {
                     </div>
                     <div class="col-6">
                         <small class="text-muted">Fréquence</small>
-                        <div>' . ucfirst($cotisation['frequence']) . '</div>
+                        <div>' . ($cotisation['frequence'] ? ucfirst($cotisation['frequence']) : 'Unique') . '</div>
                     </div>
                 </div>
             </div>
